@@ -1,0 +1,16 @@
+.tooltip-inner {
+    max-width: 80% !important;
+}
+
+
+.indenting {
+    padding-left: 50px  !important;
+}
+
+
+
+#example {
+    width: 1000px;
+    height: 1000px;
+    overflow: hidden;
+}

@@ -1,0 +1,5 @@
+.vscode/
+input/
+model_builder_venv/
+__pycache__
+model_builder/model_builder/__pycache__
