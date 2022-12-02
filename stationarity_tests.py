@@ -71,3 +71,5 @@ stationary_passed=set(kpss_results_passed).intersection(adf_results_passed)
 # %%
 stationary_passed
 # %%
+df.columns.tolist()
+# %%
