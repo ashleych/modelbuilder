@@ -63,6 +63,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'logistic_build.context_processors.cfg_assets_root',
             ],
         },
     },
@@ -122,3 +123,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ASSETS_ROOT = os.getenv('ASSETS_ROOT', '/static/assets') 
+import os
+# ASSETS_ROOT = os.path.join(BASE_DIR, '/logistic_build/static/logistic_build/assets') 
+ASSETS_ROOT = 'static/logistic_build/assets'

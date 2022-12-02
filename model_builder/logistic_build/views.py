@@ -9,6 +9,8 @@ from django.contrib.messages import constants as messages
 
 
 def index(request):
+    # return render(request, 'logistic_build/layouts/base.html')
+    # return render(request, 'logistic_build/index.html')
     return render(request, 'logistic_build/csv_inputs.html')
 
 
