@@ -51,7 +51,7 @@ def upload_csv(request):
     macro_file_obj=Traindata.objects.create(train_path = macro_file_name, train_data_name=request.POST.get("macro_input") )
     portfolio_file_obj=Traindata.objects.create(train_path = portfolio_data_input, train_data_name=request.POST.get("portfolio_data_input") )
 
-    e1=Experiment.objects.create(experiment_type='Input',name='macro_data_input')
+    e1=Experiment.objects.create(experiment_type='Input',name='macro_data_input',traindata=macro_file_obj)
     # relevant_col_names = TrainData.set_relevant_col_names(colnames_macro)
     for col in colnames_macro:
         Variables.objects.create(var_name=col,file_id=macro_file_obj,experiment_id=e1,variable_type='Independent')

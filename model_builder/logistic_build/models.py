@@ -21,7 +21,8 @@ class Traindata(models.Model):
 
     # def get_col_names(self):
     #     return json.loads(self.colnames)
-
+    def __str__(self):
+       return self.train_data_name
 
     def get_fields(self):
         return [(field.verbose_name, field.value_from_object(self)) for field in self.__class__._meta.fields[1:]] 
