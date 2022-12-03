@@ -15,7 +15,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from .models import Traindata
+from .models import Traindata,Variables,Experiment
 
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
@@ -36,11 +36,10 @@ def upload_csv(request):
     if "GET" == request.method:
         return render(request, "logistic_build/upload_csv.html", data)
     
-    csv_file = request.FILES["csv_file"]
+    csv_file = request.FILES["portfolio_data_input"]
     macro_file = request.FILES["macro_file"]
     os.makedirs("input",exist_ok=True)
-    
-    csv_file_name = default_storage.save(os.path.join("input","input.csv"), csv_file)
+    portfolio_data_input= default_storage.save(os.path.join("input","input.csv"), csv_file)
     macro_file_name = default_storage.save(os.path.join("input","macro_input.csv"), macro_file)
 
     if not csv_file.name.endswith('.csv'):
@@ -48,17 +47,14 @@ def upload_csv(request):
         return HttpResponseRedirect(reverse("logistic_build"))
         
 
-    # #if file is too large, return
-    # if csv_file.multiple_chunks():
-    #     messages.error(request,"Uploaded file is too big (%.2f MB)." % (csv_file.size/(1000*1000),))
-    #     return HttpResponseRedirect(reverse("myapp:upload_csv"))
-    # train_path = models.CharField(max_length=50)
-    # colnames = models.CharField(max_length=50)
-    # relevant_col_names 
     colnames_macro =pd.read_csv(macro_file_name,nrows=20).columns.tolist()
-    Traindata.objects.create(train_path = macro_file_name, colnames = json.dumps(colnames_macro) )
-    # relevant_col_names = TrainData.set_relevant_col_names(colnames_macro)
+    macro_file_obj=Traindata.objects.create(train_path = macro_file_name, train_data_name=request.POST.get("macro_input") )
+    portfolio_file_obj=Traindata.objects.create(train_path = portfolio_data_input, train_data_name=request.POST.get("portfolio_data_input") )
 
+    e1=Experiment.objects.create(experiment_type='Input',name='macro_data_input')
+    # relevant_col_names = TrainData.set_relevant_col_names(colnames_macro)
+    for col in colnames_macro:
+        Variables.objects.create(var_name=col,file_id=macro_file_obj,experiment_id=e1,variable_type='Independent')
     return HttpResponse("Success !")
 
 
@@ -85,4 +81,30 @@ class TraindataUpdateView(TraindataBaseView, UpdateView):
     """View to update a film"""
 
 class TraindataDeleteView(TraindataBaseView, DeleteView):
+    """View to delete a film"""
+
+
+
+class ExperimentBaseView(View):
+    model = Experiment
+    fields = '__all__'
+    success_url = reverse_lazy('all')
+
+class ExperimentListView(ExperimentBaseView, ListView):
+    """View to list all films.
+    Use the 'film_list' variable in the template
+    to access all Experiment objects"""
+
+class ExperimentDetailView(ExperimentBaseView, DetailView):
+    """View to list the details from one film.
+    Use the 'film' variable in the template to access
+    the specific film here and in the Views below"""
+
+class ExperimentCreateView(ExperimentBaseView, CreateView):
+    """View to create a new film"""
+
+class ExperimentUpdateView(ExperimentBaseView, UpdateView):
+    """View to update a film"""
+
+class ExperimentDeleteView(ExperimentBaseView, DeleteView):
     """View to delete a film"""

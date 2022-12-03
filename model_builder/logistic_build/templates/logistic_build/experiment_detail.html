@@ -4,7 +4,7 @@
 
 <div class="" style="width: 70%;">
     <div class="col">
-        <h1 class="text-center">Model Development DataDetails</h1>
+        <h1 class="text-center">Experiment Details </h1>
         <div class="d-flex justify-content-center">
             <table class="table table-striped mt-5" style="width: 50%">
                 <thead>
@@ -15,7 +15,7 @@
                 </thead>
                 <tbody>
                 
-                    {% for label, value in traindata.get_fields  %}
+                    {% for label, value in experiment.get_fields  %}
                     {% if not label == "colnames" %}
                         <tr>
                             <td>{{label | upper}}</td>
@@ -26,16 +26,17 @@
                         
                 </tbody>
             </table>
+            <!-- {{ experiment.experiment_id}} -->
+            <div>
+                {{ experiment.experiment_id}}
+
+            </div>
+            <div>
+                {{ experiment.name}}
+
+            </div>
         </div>
 <div>
-    <select id="question-subject" class="form-control" multiple="multiple">
-
-
-        <option value="">---------</option>
-        {% for col in  traindata.get_col_names %}
-        <option value="{{ col }}">{{ col }}</option>
-        {% endfor %}
-    </select>
 </div>
         <div class="d-flex justify-content-center">
             <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>

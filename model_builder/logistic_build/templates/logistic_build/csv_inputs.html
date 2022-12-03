@@ -6,9 +6,10 @@
                                             <form action="{% url "upload_csv" %}" method="POST" enctype="multipart/form-data" class="form-horizontal"> 
                                                 {% csrf_token %}
                                                 <div class="form-group">
+                                                    <input  name='portfolio_data_input 'class="form-control form-control-sm" type="text" placeholder=".form-control-sm">
                                                     <label for="name" class="control-label">Portfolio Snapshot File: </label>
                                                     <div >
-                                                        <input type="file" name="csv_file" id="csv_file" required="True" class="form-control">
+                                                        <input name='portfolio_data_input' type="file" name="csv_file" id="csv_file" required="True" class="form-control">
                                                     </div>                    
                                                 </div>
                                             
@@ -16,7 +17,8 @@
                                                     <label for="name" class="control-label">Macro File: </label>
                                                     <div >
                                                         <input type="file" name="macro_file" id="macro_file" required="True" class="form-control">
-                                                    </div>                    
+                                                    </div>   
+                                                    <input name='macro_input' class="form-control form-control-sm" type="text" placeholder=".form-control-sm">                 
                                                 </div>
                                                 <div class="form-group">                    
                                                     <div class="col-md-3 col-sm-3 col-xs-12 col-md-offset-3" style="margin-bottom:10px;">
