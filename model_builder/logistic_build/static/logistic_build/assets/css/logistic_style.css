@@ -1,0 +1,11 @@
+.stationarity_table  {
+    overflow: hidden;
+    max-width: 600px;
+    table-layout: fixed
+}
+.stationarity_table td {
+
+    word-wrap: break-word;
+    table-layout: fixed
+    }
+

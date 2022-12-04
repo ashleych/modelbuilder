@@ -4,9 +4,9 @@
 
 <div class="" style="width: 70%;">
     <div class="col">
-        <h1 class="text-center">Experiment Details </h1>
+        <h1 class="text-center">Stationarity Tests model Details </h1>
         <div class="d-flex justify-content-center">
-            <table class="table table-striped mt-5" style="width: 50%">
+            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
                 <thead>
                     <tr>
                         <th scope="col"></th>
@@ -14,27 +14,32 @@
                     </tr>
                 </thead>
                 <tbody>
-                
-                    {% for label, value in experiment.get_fields  %}
+
+                    {% for label, value in stationarity.get_fields  %}
                     {% if not label == "colnames" %}
                         <tr>
                             <td>{{label | upper}}</td>
-                            <td>{{value}}</td>
+                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
                         </tr>
                     {% endif %}
                     {% endfor %}
                         
                 </tbody>
             </table>
-            <p><strong>Experiment:</strong> <a href="{{ experiment.traindata.get_absolute_url }}">{{ experiment.traindata.train_path}}</a></p>
+            <p><strong>Stationarity Tests model:</strong> <a href="{{ stationarity.get_absolute_url }}">{{ stationarity.traindata.train_path}}</a></p>
 
 
         </div>
-
 <div>
 </div>
         <div class="d-flex justify-content-center">
             <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
+            {% comment %}
+  <!-- <a href="{% url 'variables' experiment_id=stationarity.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a> -->
+{% endcomment %}
+            <a href="{% url 'variables' experiment_id=stationarity.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a>
+        </div>
+        <div class="d-flex justify-content-center">
         </div>
     </div>
         

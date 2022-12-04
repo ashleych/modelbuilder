@@ -16,4 +16,16 @@ urlpatterns = [
     path('experiment/create/', views.ExperimentCreateView.as_view(), name='experiment_create'),
     path('experiment/<int:pk>/update/', views.ExperimentUpdateView.as_view(), name='experiment_update'),
     path('experiment/<int:pk>/delete/', views.ExperimentDeleteView.as_view(), name='experiment_delete'),
+
+    path('stationarity', views.StationarityListView.as_view(), name='all'),
+    path('stationarity/<int:pk>/detail', views.StationarityDetailView.as_view(), name='stationarity_detail'),
+    path('stationarity/create/', views.StationarityCreateView.as_view(), name='stationarity_create'),
+    path('stationarity/<int:pk>/update/', views.StationarityUpdateView.as_view(), name='stationarity_update'),
+    path('stationarity/<int:pk>/delete/', views.StationarityDeleteView.as_view(), name='stationarity_delete'),
+
+    path('variables/<int:experiment_id>', views.VariablesListView.as_view(), name='variables'),
+    path('variables/<int:pk>/detail', views.VariablesDetailView.as_view(), name='variables_detail'),
+    path('variables/create/', views.VariablesCreateView.as_view(), name='variables_create'),
+    path('variables/<int:pk>/update/', views.VariablesUpdateView.as_view(), name='variables_update'),
+    path('variables/<int:pk>/delete/', views.VariablesDeleteView.as_view(), name='variables_delete')
 ]
