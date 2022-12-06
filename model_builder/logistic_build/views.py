@@ -15,7 +15,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection
 
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
@@ -82,7 +82,9 @@ class TraindataDeleteView(TraindataBaseView, DeleteView):
     """View to delete a film"""
 
 
-
+def experiment_start(request):
+    if "GET" == request.method:
+        return render(request, "logistic_build/experiment_start.html")
 class ExperimentBaseView(View):
     model = Experiment
     fields = '__all__'
@@ -166,4 +168,30 @@ class VariablesUpdateView(VariablesBaseView, UpdateView):
     """View to update a film"""
 
 class VariablesDeleteView(VariablesBaseView, DeleteView):
+    """View to delete a film"""
+
+
+class ManualvariableselectionBaseView(View):
+    model = Manualvariableselection
+    fields = '__all__'
+    success_url = reverse_lazy('all')
+
+class ManualvariableselectionListView(ManualvariableselectionBaseView, ListView):
+    """View to list all films.
+    Use the 'film_list' variable in the template
+    to access all Manualvariableselection objects"""
+
+class ManualvariableselectionDetailView(ManualvariableselectionBaseView, DetailView):
+    """View to list the details from one film.
+    Use the 'film' variable in the template to access
+    the specific film here and in the Views below"""
+
+class ManualvariableselectionCreateView(ManualvariableselectionBaseView, CreateView):
+    """View to create a new film"""
+
+    fields= ['name','traindata']
+class ManualvariableselectionUpdateView(ManualvariableselectionBaseView, UpdateView):
+    """View to update a film"""
+    fields=['input_columns']
+class ManualvariableselectionDeleteView(ManualvariableselectionBaseView, DeleteView):
     """View to delete a film"""

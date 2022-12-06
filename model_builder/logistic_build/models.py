@@ -45,9 +45,10 @@ class Traindata(models.Model):
 class Experiment(models.Model):
     EXPERIMENT_TYPE = [
         ('Input', 'Input'),
-        ("Column_format_change",'Column_format_change'),
-        ('Feature_engineering','Feature_engineering'),
-        ('Stationarity_test', 'Stationarity_test'),
+        ("Column_format_change",'Column format change'),
+        ('Feature_engineering','Feature engineering'),
+        ('Stationarity_test', 'Stationarity test'),
+        ('Manual_variable_selection','Manual variable selection')
 
     ]
     experiment_id= models.AutoField(primary_key=True)
@@ -59,6 +60,15 @@ class Experiment(models.Model):
     traindata = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,related_name ='input_train_data')
     do_create_data =models.BooleanField(default=False)
     output_data = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,blank=True,related_name ='output_data')
+    
+    def create_output_data(self,output):
+
+        os.makedirs("output",exist_ok=True)
+        file_name_as_stored_on_disk= os.path.join("output",self.name+"_"+"Exp_id_"+ str(self.experiment_id) +".csv")
+        if os.path.exists(file_name_as_stored_on_disk):
+            os.remove(file_name_as_stored_on_disk)
+        output.to_csv(file_name_as_stored_on_disk)
+
     
     def __str__(self):
         return self.name
@@ -163,3 +173,23 @@ class Stationarity(Experiment):
 
     def get_absolute_url(self):
         return reverse('stationarity_detail', args=[str(self.experiment_id)])
+
+class Manualvariableselection(Experiment):
+
+    input_columns=models.TextField(max_length=20000,blank=True,null=True)
+    # def create_output_data(self):
+    #     pass
+
+    def subset_data(self):
+        return 1
+
+    def save(self, *args, **kwargs):
+            # self.slug = slugify(self.title)
+            if self._state.adding: 
+                self.experiment_type='Manual_variable_selection'
+                self.input_columns=json.dumps(pd.read_csv(self.traindata.train_path,nrows=10).columns.to_list())
+            else:
+                df=self.subset_data()
+            super(Manualvariableselection, self).save(*args, **kwargs)
+            if self.do_create_data:
+                    self.create_output_data(df)

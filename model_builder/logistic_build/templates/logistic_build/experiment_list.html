@@ -8,10 +8,17 @@
         <div class="d-flex justify-content-center">
         <h3>Experiment List</h3>
         {% if experiment_list %}
-            <ul>
-                {% for experiment in experiment_list %}
+        <ul>
+            {% for experiment in experiment_list %}
+            
             <li>
-                <a href="{{ experiment.get_absolute_url }}">{{ experiment.experiment_id }}</a> {{experiment.name}}
+                <a href="{{ experiment.get_absolute_url }}">{{ experiment.experiment_id }}</a> {{experiment.name}} {{ experiment.experiment_type}}
+            </li>
+            <li>
+                {% if experiment_list %}
+
+                <a href="{% url 'stationarity_detail' experiment_id=experiment.experiment_id%}">{{ experiment.experiment_id }}</a> {{experiment.name}} {{ experiment.experiment_type}} TEST
+                {% endif %}         
             </li>
             {% endfor %}
             </ul>

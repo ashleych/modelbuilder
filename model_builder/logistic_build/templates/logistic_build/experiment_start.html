@@ -1,0 +1,32 @@
+{% extends 'logistic_build/index.html' %}
+
+{% block  list_view_content%}
+
+<div class="" style="width: 100%;">
+    <div class="col">
+        <h3 class="text-center"> Experiment Details</h3>
+        <div class="d-flex justify-content-center">
+        <h3>Select Experiment Type</h3>
+
+            <ul>
+        
+            <li>
+                <a href="{% url 'stationarity_create' %}"> Stationarity Test </a> 
+            </li>
+            <li>
+                <a href="{% url 'manualvariableselection_create' %}"> Manually Select Variables </a> 
+            </li>
+
+            </ul>
+      
+  
+        </div>
+<div>
+
+</div>
+ 
+    </div>
+        
+</div>
+
+{% endblock  %}

@@ -14,6 +14,7 @@ urlpatterns = [
     path('experiment', views.ExperimentListView.as_view(), name='all'),
     path('experiment/<int:pk>/detail', views.ExperimentDetailView.as_view(), name='experiment_detail'),
     path('experiment/create/', views.ExperimentCreateView.as_view(), name='experiment_create'),
+    path('experiment/start/', views.experiment_start, name='experiment_start'),
     path('experiment/<int:pk>/update/', views.ExperimentUpdateView.as_view(), name='experiment_update'),
     path('experiment/<int:pk>/delete/', views.ExperimentDeleteView.as_view(), name='experiment_delete'),
 
@@ -27,5 +28,11 @@ urlpatterns = [
     path('variables/<int:pk>/detail', views.VariablesDetailView.as_view(), name='variables_detail'),
     path('variables/create/', views.VariablesCreateView.as_view(), name='variables_create'),
     path('variables/<int:pk>/update/', views.VariablesUpdateView.as_view(), name='variables_update'),
-    path('variables/<int:pk>/delete/', views.VariablesDeleteView.as_view(), name='variables_delete')
+    path('variables/<int:pk>/delete/', views.VariablesDeleteView.as_view(), name='variables_delete'),
+    
+    path('manualvariableselection', views.ManualvariableselectionListView.as_view(), name='all'),
+    path('manualvariableselection/<int:pk>/detail', views.ManualvariableselectionDetailView.as_view(), name='manualvariableselection_detail'),
+    path('manualvariableselection/create/', views.ManualvariableselectionCreateView.as_view(), name='manualvariableselection_create'),
+    path('manualvariableselection/<int:pk>/update/', views.ManualvariableselectionUpdateView.as_view(), name='manualvariableselection_update'),
+    path('manualvariableselection/<int:pk>/delete/', views.ManualvariableselectionDeleteView.as_view(), name='manualvariableselection_delete'),
 ]
