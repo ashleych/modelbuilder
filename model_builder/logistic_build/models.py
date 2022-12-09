@@ -7,6 +7,8 @@ from .stationarity_tests import adfuller_test,kpss_test
 import pandas as pd
 from django.core.files.storage import default_storage
 import os
+
+
 class Traindata(models.Model):
     file_id= models.AutoField(primary_key=True)
     train_data_name=models.CharField(max_length=100,null=True,blank=True) 
@@ -44,23 +46,25 @@ class Traindata(models.Model):
 
 class Experiment(models.Model):
     EXPERIMENT_TYPE = [
-        ('Input', 'Input'),
-        ("Column_format_change",'Column format change'),
-        ('Feature_engineering','Feature engineering'),
-        ('Stationarity_test', 'Stationarity test'),
-        ('Manual_variable_selection','Manual variable selection')
+        ('input', 'Input'),
+        ("columnformatchange",'Column format change'),
+        ('featureengineering','Feature engineering'),
+        ('stationarity', 'Stationarity test'),
+        ('manualvariableselection','Manual variable selection')
 
     ]
+    STATUS_TYPE= [("STARTED","STARTED"),("IN_PROGRESS","IN PROGRESS"),("DONE","DONE"),("ERROR","ERROR")]
     experiment_id= models.AutoField(primary_key=True)
-    experiment_type=models.CharField(max_length=100,choices=EXPERIMENT_TYPE,null=True, blank=True)
+    experiment_type=models.CharField(max_length=100,choices=EXPERIMENT_TYPE,null=True, blank=True,default="input")
     name = models.CharField(max_length=100,null=True, blank=True)
     # start_date = models.DateField(null=True, blank=True)
     start_date= models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    
-    traindata = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,related_name ='input_train_data')
+    experiment_status=models.CharField(max_length=20,choices=STATUS_TYPE,null=True, blank=True)
+    traindata = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,blank=True, related_name ='input_train_data')
     do_create_data =models.BooleanField(default=False)
     output_data = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,blank=True,related_name ='output_data')
-    
+    previous_experiment = models.ForeignKey('self',null=True,blank=True,on_delete=models.SET_NULL)
+   
     def create_output_data(self,output):
 
         os.makedirs("output",exist_ok=True)
@@ -68,13 +72,19 @@ class Experiment(models.Model):
         if os.path.exists(file_name_as_stored_on_disk):
             os.remove(file_name_as_stored_on_disk)
         output.to_csv(file_name_as_stored_on_disk)
-
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ["previous_experiment"]
+        else:
+            return []
     
     def __str__(self):
         return self.name
     def get_fields(self):
         return [(field.verbose_name, field.value_from_object(self)) for field in self.__class__._meta.fields[1:]] 
     def get_absolute_url(self):
+        
         return reverse('experiment_detail', args=[str(self.experiment_id)])
 class Variables(models.Model):
     MODEL_VARIABLE_TYPE = [
@@ -87,7 +97,7 @@ class Variables(models.Model):
     ]
     variable_id= models.AutoField(primary_key=True)
     variable_name=models.CharField(max_length=100,null=True, blank=True)
-    traindata= models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True)
+    traindata= models.ForeignKey(Traindata, on_delete=models.SET_NULL,blank=True, null=True)
     experiment= models.ForeignKey(Experiment, on_delete=models.SET_NULL, null=True)
     variable_type= models.CharField(
         max_length=20,
@@ -146,8 +156,9 @@ class Stationarity(Experiment):
             
     
     def create_variables_with_stationarity_results(self):
-        for col in json.loads(self.stationarity_passed):
-            Variables.objects.create(variable_name=col,traindata=self.traindata,experiment=self,experiment_status="PASS")
+        if self.experiment_status:
+            for col in json.loads(self.stationarity_passed):
+                Variables.objects.create(variable_name=col,traindata=self.traindata,experiment=self,experiment_status="PASS")
 
     def create_output_data(self):
         input_data=pd.read_csv(self.traindata.train_path)
@@ -163,16 +174,22 @@ class Stationarity(Experiment):
 
     def save(self, *args, **kwargs):
             # self.slug = slugify(self.title)
-            self.experiment_type='Stationarity_test'
-            self.do_stationarity_test()
+            self.experiment_type='stationarity'
+            if self.experiment_status=='STARTED':
+                self.do_stationarity_test()
             super(Stationarity, self).save(*args, **kwargs)
             self.create_variables_with_stationarity_results()
-            if self.do_create_data:
-                self.create_output_data()
-            super(Stationarity, self).save(*args, **kwargs)
+            if self.experiment_status:
+                if self.do_create_data:
+                    self.create_output_data()
+                self.experiment_status='DONE'
+                super(Stationarity, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('stationarity_detail', args=[str(self.experiment_id)])
+        if self.experiment_status:
+            return reverse('stationarity_detail', args=[str(self.experiment_id)])
+        else:
+            return reverse('stationarity_update', args=[str(self.experiment_id)])
 
 class Manualvariableselection(Experiment):
 
@@ -186,10 +203,27 @@ class Manualvariableselection(Experiment):
     def save(self, *args, **kwargs):
             # self.slug = slugify(self.title)
             if self._state.adding: 
-                self.experiment_type='Manual_variable_selection'
+                self.experiment_type='manualvariableselection'
                 self.input_columns=json.dumps(pd.read_csv(self.traindata.train_path,nrows=10).columns.to_list())
             else:
                 df=self.subset_data()
             super(Manualvariableselection, self).save(*args, **kwargs)
             if self.do_create_data:
                     self.create_output_data(df)
+
+from celery.execute import send_task    
+class Fibonnaci(Experiment):
+    number = models.PositiveSmallIntegerField(default=5)
+
+    def save(self,*args,**kwargs):
+        # self.experiment_status="IN_PROGRESS"
+
+        super(Fibonnaci,self).save(*args,**kwargs)
+        if self.experiment_status !='DONE':
+            print("Status from Model",self.experiment_status)
+            # from .tasks import fibonacci_task
+            # fibonacci_task(self.experiment_id)
+            send_task('logistic_build.tasks.fibonacci_task', kwargs={'experiment_id': self.experiment_id})
+            print("Status from Model",self.experiment_status)
+        else:
+            pass

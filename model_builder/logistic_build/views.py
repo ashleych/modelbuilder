@@ -15,8 +15,8 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection
-
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Fibonnaci
+from .forms import ExperimentForm,StationarityForm
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
     # return render(request, 'logistic_build/index.html')
@@ -85,8 +85,25 @@ class TraindataDeleteView(TraindataBaseView, DeleteView):
 def experiment_start(request):
     if "GET" == request.method:
         return render(request, "logistic_build/experiment_start.html")
+
+class ExperimentFormView(CreateView):
+    # model =Experiment
+    form_class=ExperimentForm
+    # fields= '__all__'
+    template_name = 'logistic_build/stationarity_form.html'
+    # def __init__(self, *args, **kwargs):
+    #     super(ExperimentFormView, self).__init__(*args, **kwargs)
+    # @method_decorator(login_required)
+    # def dispatch(self, *args, **kwargs):
+    #     return super(PlaceEventFormView, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(ExperimentFormView, self).get_form_kwargs()
+        
+        return kwargs
+
 class ExperimentBaseView(View):
-    model = Experiment
+    Form = Experiment
     fields = '__all__'
     success_url = reverse_lazy('all')
 
@@ -94,20 +111,25 @@ class ExperimentListView(ExperimentBaseView, ListView):
     """View to list all films.
     Use the 'film_list' variable in the template
     to access all Experiment objects"""
+    model=Experiment
 
 class ExperimentDetailView(ExperimentBaseView, DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
 
+# class ExperimentCreateView(ExperimentBaseView, CreateView):
+#     """View to create a new film"""
+
 class ExperimentCreateView(ExperimentBaseView, CreateView):
     """View to create a new film"""
-
+    # fields= ['name','traindata','do_kpss','do_adf','significance' ,'do_create_data']
 class ExperimentUpdateView(ExperimentBaseView, UpdateView):
     """View to update a film"""
 
 class ExperimentDeleteView(ExperimentBaseView, DeleteView):
     """View to delete a film"""
+    success_url = reverse_lazy('experiment_all')
 
 class StationarityBaseView(View):
     model = Stationarity
@@ -115,6 +137,7 @@ class StationarityBaseView(View):
     success_url = reverse_lazy('all')
 
 class StationarityListView(StationarityBaseView, ListView):
+    
     """View to list all films.
     Use the 'film_list' variable in the template
     to access all Stationarity objects"""
@@ -126,11 +149,15 @@ class StationarityDetailView(StationarityBaseView, DetailView):
 
 class StationarityCreateView(StationarityBaseView, CreateView):
     """View to create a new film"""
-
-    fields= ['name','traindata','do_kpss','do_adf','significance' ,'do_create_data']
-class StationarityUpdateView(StationarityBaseView, UpdateView):
+    fields= [ "name", "traindata", "do_kpss", "do_adf", "significance" ,"do_create_data", "previous_experiment",]
+class StationarityUpdateView( UpdateView):
     """View to update a film"""
+    model=Stationarity
+    form_class=StationarityForm
 
+    def get_form_kwargs(self):
+        kwargs = super(StationarityUpdateView, self).get_form_kwargs()
+        return kwargs
 class StationarityDeleteView(StationarityBaseView, DeleteView):
     """View to delete a film"""
 
@@ -195,3 +222,24 @@ class ManualvariableselectionUpdateView(ManualvariableselectionBaseView, UpdateV
     fields=['input_columns']
 class ManualvariableselectionDeleteView(ManualvariableselectionBaseView, DeleteView):
     """View to delete a film"""
+    
+class FibonnaciBaseView(View):
+    model = Fibonnaci
+    fields = '__all__'
+    success_url = reverse_lazy('all')
+class FibonnaciCreateView( FibonnaciBaseView, CreateView):
+    """View to create a new film"""
+
+from celery.execute import send_task    
+
+def FibonnaciRun(request):
+    if "GET" == request.method:
+        return render(request, "logistic_build/upload_csv.html", data)
+    
+    csv_file = request.FILES["portfolio_data_input"]
+    macro_file = request.FILES["macro_file"]
+    os.makedirs("input",exist_ok=True)
+    portfolio_data_input= default_storage.save(os.path.join("input","input.csv"), csv_file)
+    macro_file_name = default_storage.save(os.path.join("input","macro_input.csv"), macro_file)
+            # send_task('logistic_build.tasks.fibonacci_task', kwargs={'experiment_id': self.experiment_id})
+    return
