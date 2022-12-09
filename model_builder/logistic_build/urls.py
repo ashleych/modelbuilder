@@ -14,8 +14,8 @@ urlpatterns = [
     path('experiment', views.ExperimentListView.as_view(), name='experiment_all'),
     path('experiment/<int:pk>/detail', views.ExperimentDetailView.as_view(), name='experiment_detail'),
     path('experiment/create/', views.ExperimentCreateView.as_view(), name='experiment_create'),
-    path('experiment/start/', views.experiment_start, name='experiment_start'),
-    path('experiment/start1/', views.ExperimentFormView.as_view(), name='experiment_form'),
+    # path('experiment/start/', views.experiment_start, name='experiment_start'),
+    path('experiment/start/', views.ExperimentFormView.as_view(), name='experiment_form'),
     path('experiment/<int:pk>/update/', views.ExperimentUpdateView.as_view(), name='experiment_update'),
     path('experiment/<int:pk>/delete/', views.ExperimentDeleteView.as_view(), name='experiment_delete'),
 
