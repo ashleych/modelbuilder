@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_celery_beat',
     'django_celery_results',
+    'django_q',
     'logistic_build'
 ]
 
@@ -91,8 +92,24 @@ CELERY_BROKER_URL = config('CELERY_BROKER_REDIS_URL', default='redis://localhost
 
 # this allows you to schedule items in the Django admin.
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+
+
+Q_CLUSTER = {
+    'name': 'logistic_build_q',
+    'workers': 4,
+    'recycle': 500,
+    'timeout': 60,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 1,
+    'label': 'Django Q',
+    'redis': 'redis://localhost:6379'
+}
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
+
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -115,7 +132,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE =  'Asia/Kolkata'
+# TIME_ZONE = 'UTC'
 
 USE_I18N = True
 

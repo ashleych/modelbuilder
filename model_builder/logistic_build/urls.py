@@ -35,9 +35,7 @@ urlpatterns = [
     path('manualvariableselection/<int:pk>/detail', views.ManualvariableselectionDetailView.as_view(), name='manualvariableselection_detail'),
     path('manualvariableselection/create/', views.ManualvariableselectionCreateView.as_view(), name='manualvariableselection_create'),
     path('manualvariableselection/<int:pk>/update/', views.ManualvariableselectionUpdateView.as_view(), name='manualvariableselection_update'),
-    path('variables/create/', views.VariablesCreateView.as_view(), name='variables_create'),
     path('manualvariableselection/<int:pk>/delete/', views.ManualvariableselectionDeleteView.as_view(), name='manualvariableselection_delete'),
     
-    path('fibonnaci/create/', views.FibonnaciCreateView.as_view(), name='fibonnaci_create')
-    # path('fibonnaci/create/', views.FibonnaciRun, name='fibonnaci_run'),
+    path('index_j/', views.index_j, name='index_j')
 ]

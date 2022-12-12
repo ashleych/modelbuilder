@@ -9,14 +9,24 @@ from django.contrib.messages import constants as messages
 #  Saving POST'ed file to storage
 from .models import Traindata 
 import json
-
+# from .tasks import 
+from django.http import (
+    HttpResponse,
+    HttpResponseGone,
+    HttpResponseNotAllowed,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+)
+from django.template.response import TemplateResponse
 from django.views import View
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Fibonnaci
-from .forms import ExperimentForm,StationarityForm
+from django.urls import reverse,reverse_lazy
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection
+from .forms import ExperimentForm,StationarityForm,ManualvariableselectionForm
+
+
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
     # return render(request, 'logistic_build/index.html')
@@ -49,10 +59,11 @@ def upload_csv(request):
     macro_file_obj=Traindata.objects.create(train_path = macro_file_name, train_data_name=request.POST.get("macro_input") )
     portfolio_file_obj=Traindata.objects.create(train_path = portfolio_data_input, train_data_name=request.POST.get("portfolio_data_input") )
 
-    e1=Experiment.objects.create(experiment_type='Input',name='macro_data_input',traindata=macro_file_obj)
+    # e1=Experiment.objects.create(experiment_type='Input',name='macro_data_input',traindata=macro_file_obj)
     # relevant_col_names = TrainData.set_relevant_col_names(colnames_macro)
     for col in colnames_macro:
-        Variables.objects.create(var_name=col,file_id=macro_file_obj,experiment=e1,variable_type='Independent')
+        pass
+        # Variables.objects.create(var_name=col,file_id=macro_file_obj,experiment=e1,variable_type='Independent')
     return HttpResponse("Success !")
 
 
@@ -97,10 +108,10 @@ class ExperimentFormView(CreateView):
     # def dispatch(self, *args, **kwargs):
     #     return super(PlaceEventFormView, self).dispatch(*args, **kwargs)
 
-    def get_form_kwargs(self):
-        kwargs = super(ExperimentFormView, self).get_form_kwargs()
+    # def get_form_kwargs(self):
+    #     kwargs = super(ExperimentFormView, self).get_form_kwargs()
         
-        return kwargs
+    #     return kwargs
 
 class ExperimentBaseView(View):
     Form = Experiment
@@ -112,6 +123,10 @@ class ExperimentListView(ExperimentBaseView, ListView):
     Use the 'film_list' variable in the template
     to access all Experiment objects"""
     model=Experiment
+    
+    def get_queryset(self):
+        queryset =Experiment.objects.exclude(experiment_type='Input')
+        return queryset
 
 class ExperimentDetailView(ExperimentBaseView, DetailView):
     """View to list the details from one film.
@@ -217,29 +232,63 @@ class ManualvariableselectionCreateView(ManualvariableselectionBaseView, CreateV
     """View to create a new film"""
 
     fields= ['name','traindata']
-class ManualvariableselectionUpdateView(ManualvariableselectionBaseView, UpdateView):
+class ManualvariableselectionUpdateView(UpdateView):
     """View to update a film"""
-    fields=['input_columns']
+    model=Manualvariableselection
+    form_class=ManualvariableselectionForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # context['load_template'] = 'assds'
+        train_data_dict ={}
+        for t in Traindata.objects.all().values():
+            train_data_dict[t['file_id']]=t['column_names']
+        context['train_data_dict']=json.dumps(train_data_dict)
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super(ManualvariableselectionUpdateView, self).get_form_kwargs()
+        return kwargs
 class ManualvariableselectionDeleteView(ManualvariableselectionBaseView, DeleteView):
     """View to delete a film"""
-    
-class FibonnaciBaseView(View):
-    model = Fibonnaci
-    fields = '__all__'
-    success_url = reverse_lazy('all')
-class FibonnaciCreateView( FibonnaciBaseView, CreateView):
-    """View to create a new film"""
 
-from celery.execute import send_task    
+class ManualvariableselectionFormView(CreateView):
+    # model =Experiment
+    form_class=ManualvariableselectionForm
+    # fields= '__all__'
+    template_name = 'logistic_build/stationarity_form.html'
 
-def FibonnaciRun(request):
-    if "GET" == request.method:
-        return render(request, "logistic_build/upload_csv.html", data)
+
+# class FibonnaciBaseView(View):
+#     model = Fibonnaci
+#     fields = '__all__'
+#     success_url = reverse_lazy('all')
+# class FibonnaciCreateView( FibonnaciBaseView, CreateView):
+#     """View to create a new film"""
+
+# from celery.execute import send_task    
+
+# def FibonnaciRun(request):
+#     if "GET" == request.method:
+#         return render(request, "logistic_build/upload_csv.html", data)
     
-    csv_file = request.FILES["portfolio_data_input"]
-    macro_file = request.FILES["macro_file"]
-    os.makedirs("input",exist_ok=True)
-    portfolio_data_input= default_storage.save(os.path.join("input","input.csv"), csv_file)
-    macro_file_name = default_storage.save(os.path.join("input","macro_input.csv"), macro_file)
-            # send_task('logistic_build.tasks.fibonacci_task', kwargs={'experiment_id': self.experiment_id})
-    return
+#     csv_file = request.FILES["portfolio_data_input"]
+#     macro_file = request.FILES["macro_file"]
+#     os.makedirs("input",exist_ok=True)
+#     portfolio_data_input= default_storage.save(os.path.join("input","input.csv"), csv_file)
+#     macro_file_name = default_storage.save(os.path.join("input","macro_input.csv"), macro_file)
+#             # send_task('logistic_build.tasks.fibonacci_task', kwargs={'experiment_id': self.experiment_id})
+#     return
+
+from django.http import JsonResponse
+from time import sleep
+from django.http import JsonResponse
+from django_q.tasks import async_task
+
+def index_j(request):
+    json_payload = {
+        "message": "Hello world!"
+    }
+    # sleep(10)
+    async_task("logistic_build.tasks.sleep_and_print", 10)
+    return JsonResponse(json_payload)
