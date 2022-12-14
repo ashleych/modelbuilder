@@ -1,5 +1,7 @@
 .vscode/
 input/
+output/
 model_builder_venv/
 __pycache__
-model_builder/model_builder/__pycache__
+model_builder/
+*.csv

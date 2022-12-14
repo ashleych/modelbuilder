@@ -23,8 +23,8 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse,reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection
-from .forms import ExperimentForm,StationarityForm,ManualvariableselectionForm
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel
+from .forms import ClassificationmodelForm, ExperimentForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
 
 
 def index(request):
@@ -177,8 +177,6 @@ class StationarityDeleteView(StationarityBaseView, DeleteView):
     """View to delete a film"""
 
 
-
-
 class VariablesBaseView(View):
     model = Variables
     paginate_by = 10
@@ -259,26 +257,52 @@ class ManualvariableselectionFormView(CreateView):
     template_name = 'logistic_build/stationarity_form.html'
 
 
-# class FibonnaciBaseView(View):
-#     model = Fibonnaci
-#     fields = '__all__'
-#     success_url = reverse_lazy('all')
-# class FibonnaciCreateView( FibonnaciBaseView, CreateView):
-#     """View to create a new film"""
+class ClassificationmodelBaseView(View):
+    model = Classificationmodel
+    fields = '__all__'
+    success_url = reverse_lazy('all')
 
-# from celery.execute import send_task    
+class ClassificationmodelListView(ClassificationmodelBaseView, ListView):
+    """View to list all films.
+    Use the 'film_list' variable in the template
+    to access all Classificationmodel objects"""
 
-# def FibonnaciRun(request):
-#     if "GET" == request.method:
-#         return render(request, "logistic_build/upload_csv.html", data)
-    
-#     csv_file = request.FILES["portfolio_data_input"]
-#     macro_file = request.FILES["macro_file"]
-#     os.makedirs("input",exist_ok=True)
-#     portfolio_data_input= default_storage.save(os.path.join("input","input.csv"), csv_file)
-#     macro_file_name = default_storage.save(os.path.join("input","macro_input.csv"), macro_file)
-#             # send_task('logistic_build.tasks.fibonacci_task', kwargs={'experiment_id': self.experiment_id})
-#     return
+class ClassificationmodelDetailView(ClassificationmodelBaseView, DetailView):
+    """View to list the details from one film.
+    Use the 'film' variable in the template to access
+    the specific film here and in the Views below"""
+
+class ClassificationmodelCreateView(ClassificationmodelBaseView, CreateView):
+    """View to create a new film"""
+    fields= ['name','traindata']
+
+class ClassificationmodelUpdateView(UpdateView):
+    """View to update a film"""
+    model=Classificationmodel
+    form_class=ClassificationmodelForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # context['load_template'] = 'assds'
+        train_data_dict ={}
+        for t in Traindata.objects.all().values():
+            train_data_dict[t['file_id']]=t['column_names']
+        context['train_data_dict']=json.dumps(train_data_dict)
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super(ClassificationmodelUpdateView, self).get_form_kwargs()
+        return kwargs
+class ClassificationmodelDeleteView(ClassificationmodelBaseView, DeleteView):
+    """View to delete a film"""
+
+class ClassificationmodelFormView(CreateView):
+    # model =Experiment
+    form_class=ClassificationmodelForm
+    # fields= '__all__'
+    template_name = 'logistic_build/classificationmodel_form.html'
+
+
 
 from django.http import JsonResponse
 from time import sleep

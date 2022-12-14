@@ -65,7 +65,8 @@ class Experiment(models.Model):
         ("columnformatchange",'Column format change'),
         ('featureengineering','Feature engineering'),
         ('stationarity', 'Stationarity test'),
-        ('manualvariableselection','Manual variable selection')
+        ('manualvariableselection','Manual variable selection'),
+        ('classificationmodel','Build logistic regression model')
 
     ]
     STATUS_TYPE= [("STARTED","STARTED"),("IN_PROGRESS","IN PROGRESS"),("DONE","DONE"),("ERROR","ERROR")]
@@ -142,12 +143,9 @@ class Stationarity(Experiment):
     def get_json(self,field):
         return json.loads(getattr(self,field))
 
-
     def updates_variable_list(self):
         pass
 
-            
-    
     def create_variables_with_stationarity_results(self):
         if self.experiment_status:
             for col in json.loads(self.stationarity_passed):
@@ -268,3 +266,41 @@ class Manualvariableselection(Experiment):
 
         # os.makedirs("output",exist_ok=True)
 
+class Classificationmodel(Experiment):
+    label_col=models.CharField(max_length=100,blank=True,null=True)
+    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    train_split=models.FloatField(blank=True,null=True)
+    test_split=models.FloatField(blank=True,null=True)
+    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    ignored_columns=models.TextField(max_length=20000,blank=True,null=True)
+    cross_validation=models.BooleanField(default=False)
+
+    def get_absolute_url(self):
+        if self.experiment_status:
+            return reverse('classificationmodel_detail', args=[str(self.experiment_id)])
+        else:
+            return reverse('classificationmodel_update', args=[str(self.experiment_id)])
+    
+    def save(self, *args, **kwargs):
+            # self.slug = slugify(self.title)
+            if self._state.adding: 
+                self.experiment_type='classificationmodel'
+                # if self.previous_experiment and self.previous_experiment.output_data:
+                #     self.traindata=self.previous_experiment.output_data
+                #     self.input_columns=json.dumps(pd.read_csv(self.traindata.train_path,nrows=10).columns.to_list())
+
+                #     if  self.run_now:
+                #         self.run_start_time= timezone.now()
+                #         self.create_output_data()
+                #         self.run_end_time= timezone.now()
+            else:
+                if  self.run_now:
+                        self.run_start_time= timezone.now()
+                        # self.create_output_data()
+                        self.experiment_status='STARTED'
+                        self.run_end_time= timezone.now()
+                # df=self.subset_data()
+            super(Classificationmodel, self).save(*args, **kwargs)
+            # if self.do_create_data:
+class Results(Experiment):
+    pass

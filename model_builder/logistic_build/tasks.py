@@ -4,9 +4,12 @@ import pandas as pd
 import json
 
 from model_builder.celery import app
-from .models import Experiment,Stationarity
+from .models import Experiment,Stationarity,Logisticregression
 from pathlib import Path
 import os
+
+from .Logisticregression_spark import LogisticRegressionModel_spark,evaluation_metrics_mllib
+
 
 from django.conf import settings
 
@@ -41,7 +44,18 @@ def do_stationarity_test_django_q(experiment_id):
         experiment.run_now=False
         experiment.save()
     
+def run_logistic_regression(experiment_id):
 
+        experiment = Logisticregression.objects.get(experiment_id=experiment_id)
+        print(settings.BASE_DIR)
+        if os.path.exists(experiment.traindata.train_path):
+            file_path=experiment.traindata.train_path
+        else:
+            file_path=os.path.join(Path(settings.BASE_DIR).parent,experiment.traindata.train_path)
+            if not os.path.exists(file_path):
+                ValueError("Input file doesnt exist")
+       log_regression_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, 
+       label_col= ) 
 # from celery import shared_task
 
 # MYGLOBAL = 0
@@ -73,8 +87,3 @@ def do_stationarity_test_django_q(experiment_id):
 #         calculation.save()        
 #     # super(Fibonnaci,self).save({experiment_status:"DONE"})
 
-from time import sleep
-
-def sleep_and_print(secs):
-    sleep(secs)
-    print("Task ran!")
