@@ -22,7 +22,7 @@ class ExperimentForm(ModelForm):
         models_dict = {'stationarity' : Stationarity, 'manualvariableselection' :Manualvariableselection,'classificationmodel':Classificationmodel}
         s=models_dict[m.experiment_type].objects.create(experiment_type=m.experiment_type, name=m.name,previous_experiment=m.previous_experiment)
         if m.previous_experiment:
-            s.traindata = m.previous_experiment.traindata
+            s.traindata = m.previous_experiment.output_data
             s.save()
         # s.save()
         return s

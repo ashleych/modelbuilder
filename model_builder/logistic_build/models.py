@@ -2,6 +2,8 @@ from django.db import models
 import json
 
 from django.urls import reverse
+
+from .utils import get_spark_session
 # Create your models here.
 from .stationarity_tests import adfuller_test,kpss_test
 import pandas as pd
@@ -13,6 +15,8 @@ from django.conf import settings
 from pathlib import Path
 from django.utils import timezone
 
+import os
+import glob
 import datatable as dt
 class Traindata(models.Model):
     file_id= models.AutoField(primary_key=True)
@@ -50,12 +54,20 @@ class Traindata(models.Model):
         #     ] 
 
     def save(self, *args, **kwargs):
-            # self.slug = slugify(self.title)
-            # self.experiment_type='stationarity'
-            t=dt.fread(file=self.train_path)
-            self.no_of_cols=list(t.shape)[0]
-            self.no_of_rows=list(t.shape)[1]
-            self.column_names=json.dumps(list(t.names))
+
+            # if file details are already available, there is no need to re-read these details
+            # file details are available in case of spark operations, where output file is written by spark
+            # in case the file is directly input via the front end, this infor will be missing and hence will have to be read in the save here
+            if not self.no_of_cols:
+                if os.path.isdir(self.train_path):
+                    # Path can be a directory in case it has multiple files. Usually this willbe because these are csv files from a spark write operation
+                    # for now it is assumed that these are all csv files and spark will be used to read these files
+                    pass
+                else:
+                    t=dt.fread(file=self.train_path)
+                    self.no_of_cols=list(t.shape)[1]
+                    self.no_of_rows=list(t.shape)[0]
+                    self.column_names=json.dumps(list(t.names))
             super(Traindata, self).save(*args, **kwargs)
 
 
@@ -67,25 +79,23 @@ class Experiment(models.Model):
         ('stationarity', 'Stationarity test'),
         ('manualvariableselection','Manual variable selection'),
         ('classificationmodel','Build logistic regression model')
-
     ]
     STATUS_TYPE= [("STARTED","STARTED"),("IN_PROGRESS","IN PROGRESS"),("DONE","DONE"),("ERROR","ERROR")]
     experiment_id= models.AutoField(primary_key=True)
     experiment_type=models.CharField(max_length=100,choices=EXPERIMENT_TYPE,null=True, blank=True,default="input")
     name = models.CharField(max_length=100,null=True, blank=True)
+    artefacts_directory = models.CharField(max_length=100,null=True, blank=True)
     # start_date = models.DateField(null=True, blank=True)
     created_on_date= models.DateTimeField(auto_now_add=True, null=True, blank=True)
     experiment_status=models.CharField(max_length=20,choices=STATUS_TYPE,null=True, blank=True)
     traindata = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,blank=True, related_name ='input_train_data')
-    do_create_data =models.BooleanField(default=False)
+    do_create_data =models.BooleanField(default=True)
+    enable_spark=models.BooleanField(default=True)
     output_data = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,blank=True,related_name ='output_data')
     previous_experiment = models.ForeignKey('self',null=True,blank=True,on_delete=models.SET_NULL)
     run_now=models.BooleanField(default=False)
     run_start_time= models.DateTimeField( null=True, blank=True)
     run_end_time= models.DateTimeField(null=True, blank=True)
-
-   
-
     
     def __str__(self):
         return self.name if self.name else ''
@@ -95,6 +105,15 @@ class Experiment(models.Model):
         
     def get_absolute_url(self):
         return reverse('experiment_detail', args=[str(self.experiment_id)])
+    def save(self, *args, **kwargs):
+            # self.slug = slugify(self.title)
+            super(Experiment, self).save(*args, **kwargs)
+            if not self.artefacts_directory:
+                self.artefacts_directory =os.path.join("artefacts","experiment_"+str(self.experiment_id)+"_"+self.name)
+                os.makedirs(self.artefacts_directory,exist_ok=True)
+                kwargs['force_insert']=False
+                super(Experiment, self).save(*args, **kwargs)
+
 class Variables(models.Model):
     MODEL_VARIABLE_TYPE = [
         ('Dependent', 'Dependent'),
@@ -208,6 +227,7 @@ class Stationarity(Experiment):
         else:
             return reverse('stationarity_update', args=[str(self.experiment_id)])
 
+
 class Manualvariableselection(Experiment):
 
     input_columns=models.TextField(max_length=20000,blank=True,null=True)
@@ -247,23 +267,44 @@ class Manualvariableselection(Experiment):
             return reverse('manualvariableselection_update', args=[str(self.experiment_id)])
 
     def create_output_data(self):
-        
-        if self.run_now:
-            if self.do_create_data:
-                # self.create_output_data()
-                cols_to_keep=json.loads(self.keep_columns)
-                input_data= pd.read_csv(self.traindata.train_path)
-                output_data = input_data[cols_to_keep]
+        output_dir=os.path.join(self.artefacts_directory,'output')
 
 
-                file_name_as_stored_on_disk= os.path.join("output",self.name+"_"+"Exp_id_"+ str(self.experiment_id) +".csv")
-                if os.path.exists(file_name_as_stored_on_disk):
-                    os.remove(file_name_as_stored_on_disk)
-                output_data.to_csv(file_name_as_stored_on_disk)
-                macro_file_obj=Traindata.objects.create(train_path = file_name_as_stored_on_disk, train_data_name=self.name + "_output")
-                self.output_data=macro_file_obj
-                self.experiment_status="DONE"
+        os.makedirs(output_dir,exist_ok=True)
+        files = glob.glob(output_dir+"/*") # look for files inside the directory
+        if len(files)>0:
+            for f in files:
+                os.remove(f)
+        if not self.enable_spark:
+            if self.run_now:
+                if self.do_create_data:
+                    cols_to_keep=json.loads(self.keep_columns)
+                    input_data= pd.read_csv(self.traindata.train_path)
+                    output_data = input_data[cols_to_keep]
 
+                    file_name_as_stored_on_disk= os.path.join("output",self.name+"_"+"Exp_id_"+ str(self.experiment_id) +".csv")
+                    if os.path.exists(file_name_as_stored_on_disk):
+                        os.remove(file_name_as_stored_on_disk)
+                    output_data.to_csv(file_name_as_stored_on_disk)
+                    macro_file_obj=Traindata.objects.create(train_path = file_name_as_stored_on_disk, train_data_name=self.name + "_output")
+                    self.output_data=macro_file_obj
+                    self.experiment_status="DONE"
+        else:
+            if self.run_now:
+                if self.do_create_data:
+                    cols_to_keep=json.loads(self.keep_columns)
+                    spark=get_spark_session()
+                    df = spark.read.option("header",True).csv(self.traindata.train_path, inferSchema=True)
+                    spark_df_subset = df.select(*cols_to_keep)
+                    spark_df_subset.write.mode('overwrite').option("header",True).csv(output_dir)
+                    no_of_rows = spark_df_subset.count()
+                    no_of_cols = len(spark_df_subset.columns)
+                    column_names = json.dumps(spark_df_subset.columns)
+                    macro_file_obj=Traindata.objects.create(train_path = output_dir, 
+                    train_data_name=self.name + "_output",no_of_cols=no_of_cols,no_of_rows=no_of_rows,column_names=column_names)
+                    self.output_data=macro_file_obj
+                    self.experiment_status="DONE"
+                    # spark.read.csv(output_dir)
         # os.makedirs("output",exist_ok=True)
 
 class Classificationmodel(Experiment):
@@ -297,10 +338,31 @@ class Classificationmodel(Experiment):
                 if  self.run_now:
                         self.run_start_time= timezone.now()
                         # self.create_output_data()
+                        # from .tasks import run_logistic_regression # this is done to avoid 
+                        import logistic_build.tasks as t
                         self.experiment_status='STARTED'
+                        super(Classificationmodel, self).save(*args, **kwargs)
+                        # async_task("logistic_build.tasks.do_stationarity_test_django_q", self.experiment_id)
+                        logistic_results= t.run_logistic_regression(self.experiment_id)
+
+            # if self.experiment_status and self.experiment_status=='DONE':
+            #     self.create_variables_with_stationarity_results()
+            #     if self.do_create_data:
+            #         self.create_output_data()
+
+                    
+                        self.experiment_status='DONE'
                         self.run_end_time= timezone.now()
                 # df=self.subset_data()
             super(Classificationmodel, self).save(*args, **kwargs)
-            # if self.do_create_data:
-class Results(Experiment):
-    pass
+
+# class Results(models.Model):
+#        self.train_auc=0
+#        self.test_auc=0
+#        self.beta_coefficients=None
+#        self.train_precision_recall=None
+#        self.test_precision_recall=None
+#        self.plot_test_pr_curve=None
+#        self.plot_train_pr_curve=None
+#        self.plot_train_roc=None
+#        self.plot_test_roc=None

@@ -11,7 +11,7 @@
         <h1 class="mb-5">Delete Experiment</h1>
 
         <p class="h5">Are you sure you want to delete the Experiment:</p>
-        <h3 class="my-5">{{ experiment.name }}</h3>
+        <h3 class="my-5">{{ name }}</h3>
         <form action="" method="POST">
             {% csrf_token %}
             {% comment %} <input type="submit" value="Confirm">

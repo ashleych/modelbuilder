@@ -4,7 +4,8 @@ import pandas as pd
 import json
 
 from model_builder.celery import app
-from .models import Experiment,Stationarity,Logisticregression
+# from .models import Experiment,Stationarity,Logisticregression
+import logistic_build.models as m
 from pathlib import Path
 import os
 
@@ -14,7 +15,7 @@ from .Logisticregression_spark import LogisticRegressionModel_spark,evaluation_m
 from django.conf import settings
 
 def do_stationarity_test_django_q(experiment_id):
-        experiment = Stationarity.objects.get(experiment_id=experiment_id)
+        experiment = m.Stationarity.objects.get(experiment_id=experiment_id)
         print(settings.BASE_DIR)
         if os.path.exists(experiment.traindata.train_path):
             file_path=experiment.traindata.train_path
@@ -46,7 +47,7 @@ def do_stationarity_test_django_q(experiment_id):
     
 def run_logistic_regression(experiment_id):
 
-        experiment = Logisticregression.objects.get(experiment_id=experiment_id)
+        experiment = m.Classificationmodel.objects.get(experiment_id=experiment_id)
         print(settings.BASE_DIR)
         if os.path.exists(experiment.traindata.train_path):
             file_path=experiment.traindata.train_path
@@ -54,8 +55,8 @@ def run_logistic_regression(experiment_id):
             file_path=os.path.join(Path(settings.BASE_DIR).parent,experiment.traindata.train_path)
             if not os.path.exists(file_path):
                 ValueError("Input file doesnt exist")
-       log_regression_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, 
-       label_col= ) 
+        log_regression_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, label_col=experiment.label_col ) 
+        return log_regression_results
 # from celery import shared_task
 
 # MYGLOBAL = 0

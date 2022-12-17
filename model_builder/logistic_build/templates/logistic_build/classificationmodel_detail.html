@@ -1,0 +1,47 @@
+{% extends 'logistic_build/index.html' %}
+
+{% block  list_view_content%}
+
+<div class="" style="width: 70%;">
+    <div class="col">
+        <h1 class="text-center">Classification model  Details </h1>
+        <div class="d-flex justify-content-center">
+            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for label, value in classificationmodel.get_fields  %}
+                    {% if not label == "colnames" %}
+                        <tr>
+                            <td>{{label | upper}}</td>
+                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
+                        </tr>
+                    {% endif %}
+                    {% endfor %}
+                        
+                </tbody>
+            </table>
+
+
+        </div>
+<div>
+</div>
+        <div class="d-flex justify-content-center">
+            <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
+            {% comment %}
+  <!-- <a href="{% url 'variables' experiment_id=classificationmodel.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a> -->
+  <a href="{% url 'classificationmodel' experiment_id=classificationmodel.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a>
+  {% endcomment %}
+        </div>
+        <div class="d-flex justify-content-center">
+        </div>
+    </div>
+        
+</div>
+
+{% endblock  %}

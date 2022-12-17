@@ -45,24 +45,24 @@ def upload_csv(request):
         return render(request, "logistic_build/upload_csv.html", data)
     
     csv_file = request.FILES["portfolio_data_input"]
-    macro_file = request.FILES["macro_file"]
+    # macro_file = request.FILES["macro_file"]
     os.makedirs("input",exist_ok=True)
     portfolio_data_input= default_storage.save(os.path.join("input","input.csv"), csv_file)
-    macro_file_name = default_storage.save(os.path.join("input","macro_input.csv"), macro_file)
+    # macro_file_name = default_storage.save(os.path.join("input","macro_input.csv"), macro_file)
 
     if not csv_file.name.endswith('.csv'):
         messages.error(request,'File is not CSV type')
         return HttpResponseRedirect(reverse("logistic_build"))
         
 
-    colnames_macro =pd.read_csv(macro_file_name,nrows=20).columns.tolist()
-    macro_file_obj=Traindata.objects.create(train_path = macro_file_name, train_data_name=request.POST.get("macro_input") )
+    # colnames_macro =pd.read_csv(macro_file_name,nrows=20).columns.tolist()
+    # macro_file_obj=Traindata.objects.create(train_path = macro_file_name, train_data_name=request.POST.get("macro_input") )
     portfolio_file_obj=Traindata.objects.create(train_path = portfolio_data_input, train_data_name=request.POST.get("portfolio_data_input") )
 
     # e1=Experiment.objects.create(experiment_type='Input',name='macro_data_input',traindata=macro_file_obj)
     # relevant_col_names = TrainData.set_relevant_col_names(colnames_macro)
-    for col in colnames_macro:
-        pass
+    # for col in colnames_macro:
+    #     pass
         # Variables.objects.create(var_name=col,file_id=macro_file_obj,experiment=e1,variable_type='Independent')
     return HttpResponse("Success !")
 
@@ -145,7 +145,19 @@ class ExperimentUpdateView(ExperimentBaseView, UpdateView):
 class ExperimentDeleteView(ExperimentBaseView, DeleteView):
     """View to delete a film"""
     success_url = reverse_lazy('experiment_all')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # context['load_template'] = 'assds'
+        # train_data_dict ={}
+        # for t in Traindata.objects.all().values():
+        #     train_data_dict[t['file_id']]=t['column_names']
+        # context['train_data_dict']=json.dumps(train_data_dict)
+        return context
 
+    # def get_queryset(self):
+    #     # queryset =Experiment.objects.exclude(experiment_type='Input')
+    #     queryset=Experiment.objects.get(pk=self.__dict__['kwargs']['pk'])
+    #     return queryset
 class StationarityBaseView(View):
     model = Stationarity
     fields = '__all__'
@@ -295,6 +307,13 @@ class ClassificationmodelUpdateView(UpdateView):
         return kwargs
 class ClassificationmodelDeleteView(ClassificationmodelBaseView, DeleteView):
     """View to delete a film"""
+    template_name='logistic_build/experiment_confirm_delete.html'
+    
+    def get_context_data(self, **kwargs) :
+        context=super().get_context_data(**kwargs)
+        context['name']=context['object'].name
+        return context
+
 
 class ClassificationmodelFormView(CreateView):
     # model =Experiment

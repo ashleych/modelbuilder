@@ -3,5 +3,5 @@ input/
 output/
 model_builder_venv/
 __pycache__
-model_builder/
+*/*/migrations/
 *.csv
