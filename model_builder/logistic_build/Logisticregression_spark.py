@@ -16,6 +16,35 @@ import scorecardpy as sc
 
 from sklearn.metrics import auc, roc_curve
 from matplotlib import pyplot as plt 
+import plotly.express as px
+
+def plot_roc(fpr,tpr,auc):
+  fig = px.area(
+      x=fpr, y=tpr,
+      title=f'ROC Curve (AUC={auc:.4f})',
+      labels=dict(x='False Positive Rate', y='True Positive Rate'),
+      width=700, height=500
+  )
+  fig.add_shape(
+      type='line', line=dict(dash='dash'),
+      x0=0, x1=1, y0=0, y1=1
+  )
+
+  fig.update_yaxes(scaleanchor="x", scaleratio=1)
+  fig.update_xaxes(constrain='domain')
+  # fig.show()
+  return fig
+
+def plot_precision_recall(recall, precision, areaUnderPR):
+  fig = px.area(
+    x=recall, y=precision,
+    title=f'Precision-Recall Curve (Area under PR={areaUnderPR:.4f})',
+    labels=dict(x='Recall', y='Precision'),
+    width=700, height=500)
+  fig.add_shape(type='line', line=dict(dash='dash'),x0=0, x1=1, y0=1, y1=0)
+  fig.update_yaxes(scaleanchor="x", scaleratio=1)
+  fig.update_xaxes(constrain='domain')
+  return fig
 
 def auto_str(cls):
     def __str__(self):
@@ -29,13 +58,77 @@ def auto_str(cls):
 # @auto_str
 
 from dataclasses import dataclass
-
+import json
 @auto_str
 class ClassificationMetrics():
 # https://www.kaggle.com/code/solaznog/mllib-spark-and-pyspark
     def __init__(self) -> None:
-      self.auc=None
-      self.coefficients=None
+        self._FPR=None
+        self._TPR=None
+        self._precision=None
+        self._recall=None
+      
+    @property
+    def FPR(self):
+        print("fpr getter method called")
+        return json.loads(self._FPR)
+      
+    # a setter function
+    @FPR.setter
+    def FPR(self, a):
+        # if(a < 18):
+        #   raise ValueError("Sorry you age is below eligibility criteria")
+        print("FPR setter method called")
+        self._FPR = json.dumps(list(a))
+
+    @property
+    def TPR(self):
+        print("tpr getter method called")
+        return json.loads(self._TPR)
+      
+    # a setter function
+    @TPR.setter
+    def TPR(self, a):
+        # if(a < 18):
+        #   raise ValueError("Sorry you age is below eligibility criteria")
+        print("TPR setter method called")
+        self._TPR = json.dumps(list(a))
+
+    @property
+    def precision(self):
+        print("precision getter method called")
+        return json.loads(self._precision)
+      
+    # a setter function
+    @precision.setter
+    def precision(self, a):
+        # if(a < 18):
+        #   raise ValueError("Sorry you age is below eligibility criteria")
+        print("TPR setter method called")
+        self._precision = json.dumps(list(a))
+    @property
+    def recall(self):
+        print("recall getter method called")
+        return json.loads(self._recall)
+      
+    # a setter function
+    @recall.setter
+    def recall(self, a):
+        # if(a < 18):
+        #   raise ValueError("Sorry you age is below eligibility criteria")
+        print("recall setter method called")
+        self._recall = json.dumps(list(a))
+      
+    @property
+    def all_attributes(self):
+        all_attrib=dict(vars(self), FPR=self.FPR,TPR=self.TPR,precision=self.precision,recall=self.recall)
+        # all_attrib.pop('_FPR', 'No Key found')
+        keys= list(all_attrib.keys()) 
+        for key in keys:
+          if key.startswith("_"): #remove all private keys
+            all_attrib.pop(key, 'No Key found')
+
+        return all_attrib
 
 class OverallClassificationResults():
    def __init__(self) -> None:
@@ -48,28 +141,29 @@ class OverallClassificationResults():
 class LogisticRegressionModel_spark():
   def __init__(self, 
                 seed: int = 2022,
-                filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv",
-                # filepath = "/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv",
+                # filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv",
+                filepath = "/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv",
                 label_col = 'def_trig',
                 remove_cols_list = ["_c0", "Date", "Date.1"],
                 prediction_cols = ["M97"],
                 train_percent = 0.7,
                 test_percent = 0.3,
-                normalise=False
+                normalise=False,
+                inferSchema=True
                ):
     
     self.spark  = self.get_spark_session()
     self.train_result = ClassificationMetrics() #initialise this 
     self.test_result = ClassificationMetrics() #initialise this 
     self.overall_result = OverallClassificationResults() #initialise this 
-    self.df = self.read_csv_data(filepath)
+    self.df = self.read_csv_data(filepath,inferSchema=inferSchema)
     self.columns = self.df.columns
-    import psutil
+    # import psutil
 
 # Getting % usage of virtual_memory ( 3rd field)
-    print('RAM memory % used:', psutil.virtual_memory()[2])
-    # Getting usage of virtual_memory in GB ( 4th field)
-    print('RAM Used (GB):', psutil.virtual_memory()[3]/1000000000)
+    # print('RAM memory % used:', psutil.virtual_memory()[2])
+    # # Getting usage of virtual_memory in GB ( 4th field)
+    # print('RAM Used (GB):', psutil.virtual_memory()[3]/1000000000)
     self.remove_cols(remove_cols_list)
     self.feature_cols = self.get_feature_colums(label_col)
     self.spark_output_colname=None
@@ -83,9 +177,10 @@ class LogisticRegressionModel_spark():
     self.transform_data()
     self.lrModel= self.build_logistic_regression_model()
     self.get_coefficients_names()
-    self.test_result.auc = self.plot_roc(self.piped_test_data,self.lrModel,type='test')
-    self.train_result.auc = self.plot_roc(self.piped_test_data,self.lrModel,type='test')
+
+    self.plot_roc(self.piped_test_data,self.lrModel,type='test')
     self.plot_roc(self.piped_train_data,self.lrModel,type='train')
+    # self.plot_roc(self.piped_train_data,self.lrModel,type='train')
     self.plot_precision_recall(type='train')
     self.plot_precision_recall(type='test')
     # self.create_results()
@@ -103,17 +198,17 @@ class LogisticRegressionModel_spark():
   #   pass
 
   def get_spark_session(app_name:str = "Scorecard"):
-      spark.sparkContext.stop()
+    
       spark = SparkSession.builder.appName(app_name).config("spark.memory.offHeap.enabled","true").config("spark.memory.offHeap.size","10g").config('spark.executor.memory', '2g').config("spark.driver.host","localhost").getOrCreate()
       # http://localhost:4040/executors/ use this to check local spark session
       return spark    
     # def build_vector_assembler(self):
     #   vec_assembler = VectorAssembler(inputCols=self.feature_cols, outputCol="features_vector")
     #   self.stages+=
-  def read_csv_data(self,filepath:str):
+  def read_csv_data(self,filepath:str,inferSchema):
     if os.path.exists(filepath):
-      df = self.spark.read.option("header",True).csv(filepath, inferSchema=True)
-      print(df.columns)
+      df = self.spark.read.option("header",True).csv(filepath, inferSchema=inferSchema)
+      # print(df.columns)
     else:
       RuntimeError(f"Path {filepath} not found")
     return df
@@ -191,8 +286,8 @@ class LogisticRegressionModel_spark():
           names_with_idx+= self.piped_train_data.schema[self.spark_output_colname].metadata["ml_attr"]["attrs"].get('binary')
       names=[x['name'] for x in sorted(names_with_idx, key= lambda x:x["idx"])]
       matchcoefs=np.column_stack((modelcoefficients,np.array(names)))
-      self.overall_result.coefficients=matchcoefs
-      self.overall_result.feature_names=np.array(names)
+      self.overall_result.coefficients=list(modelcoefficients)
+      self.overall_result.feature_cols=names
       # import pandas as pd
 
       # matchcoefsdf=pd.DataFrame(matchcoefs)
@@ -204,23 +299,32 @@ class LogisticRegressionModel_spark():
       # return matchcoefsdf['Coefvalue']
 
   def plot_roc(self,data, model,type="test"):
-    pred_ = model.transform(data)
-    self.pred_=pred_
-    pred_pd_ = pred_.select(['label', 'prediction', 'probability']).toPandas()
+    if type=='train':
+        self.trainingSummary = self.lrModel.summary
+        self.roc = self.trainingSummary.roc.toPandas()
+        self.train_result.FPR =self.roc['FPR']
+        self.train_result.TPR =self.roc['TPR']
+        self.train_result.areaUnderROC= self.trainingSummary.areaUnderROC
+    else:
+        pred_ = model.transform(data)
+        self.pred_=pred_
+        pred_pd_ = pred_.select(['label', 'prediction', 'probability']).toPandas()
 
-    pred_pd_['probability'] = pred_pd_['probability'].map(lambda x: list(x))
-    pred_pd_['encoded_label'] = pred_pd_['label'].map(lambda x: np.eye(2)[int(x)])
+        pred_pd_['probability'] = pred_pd_['probability'].map(lambda x: list(x))
+        pred_pd_['encoded_label'] = pred_pd_['label'].map(lambda x: np.eye(2)[int(x)])
 
-    y_pred_ = np.array(pred_pd_['probability'].tolist())
-    y_true_ = np.array(pred_pd_['encoded_label'].tolist())
+        y_pred_ = np.array(pred_pd_['probability'].tolist())
+        y_true_ = np.array(pred_pd_['encoded_label'].tolist())
 
-    fpr_, tpr_, threshold_ = roc_curve(y_score=y_pred_[:,0], y_true=y_true_[:,0])
-    auc_ = auc(fpr_, tpr_)
-
+        fpr_, tpr_, threshold_ = roc_curve(y_score=y_pred_[:,0], y_true=y_true_[:,0])
+        auc_ = auc(fpr_, tpr_)
+        self.test_result.FPR =fpr_
+        self.test_result.TPR =tpr_
+        self.test_result.areaUnderROC = auc_
     if type=='test':
       self.test_result.precision, self.test_result.recall, self.test_result.thresholds = precision_recall_curve(y_true_[:,0], y_pred_[:,0])
 
-    return auc_
+    return 
     # setattr(self.result,"auc_"+type,auc_)
     # plt.figure()
     # plt.plot([0,1], [0,1], '--', color='orange')
@@ -240,16 +344,12 @@ class LogisticRegressionModel_spark():
     # plt.show()
 
   def plot_area_under_ROC(self):
-    self.trainingSummary = self.lrModel.summary
-    self.roc = self.trainingSummary.roc.toPandas()
-    # plt.plot(self.roc['FPR'],self.roc['TPR'])
-    # plt.ylabel('False Positive Rate')
-    # plt.xlabel('True Positive Rate')
-    # plt.title('ROC Curve')
-    # # plt.show()
+    pass
+
     # print('Training set areaUnderROC: ' + str(self.trainingSummary.areaUnderROC))   
 
   def plot_precision_recall(self,type='test'):
+    
 #     from pyspark.mllib.evaluation import BinaryClassificationMetrics
 #     predictionAndLabels = self.piped_test_data.map(lambda lp: (float(self.lrModel.predict(lp[self.spark_output_colname])), lp.label))
 #     self.lrModel.summary.pr.toPandas()
@@ -263,42 +363,28 @@ class LogisticRegressionModel_spark():
 #     print("Area under ROC = %s" % metrics.areaUnderROC)
     if type=='train':
       pr_df =self.lrModel.summary.pr.toPandas()
+      # self.train_result.areaUnderPR = self.lrModel.summary.areaUnderPR
+
       self.train_result.precision =pr_df['precision'].to_list() 
       self.train_result.recall = pr_df['recall'].to_list()
       # plt.plot(self.result.pr_train['recall'],self.result.pr_train['precision'])
       # plt.ylabel('Precision')
       # plt.xlabel('Recall')
+      #### get the areaUnderPR
+      predictions= self.lrModel.transform(self.piped_train_data)  
+      evaluator = BinaryClassificationEvaluator(metricName = 'areaUnderPR')
+      self.train_result.areaUnderPR = evaluator.evaluate(predictions)
     else:
-      pass
-      # predictions= self.lrModel.transform(self.piped_test_data)  
-      # results = predictions.select(['prediction', 'label'])
-      # # predictionAndLabels=results.rdd
-      # evaluator = BinaryClassificationEvaluator()
-      # self.test_result.areaUnderPR = evaluator.evaluate(predictions,{evaluator.metricName: "areaUnderPR"})
+      predictions= self.lrModel.transform(self.piped_test_data)  
+      evaluator = BinaryClassificationEvaluator(metricName = 'areaUnderPR')
+      # good example is in the link below
+      #  https://towardsdatascience.com/predict-customer-churn-using-pyspark-machine-learning-519e866449b5
+      self.test_result.areaUnderPR = evaluator.evaluate(predictions)
 
-      # pred_ = self.lrModel.transform(self.piped_test_data)
-      # # self.pred_=pred_
-      # pred_pd_ = pred_.select(['label', 'prediction', 'probability']).toPandas()
-
-      # pred_pd_['probability'] = pred_pd_['probability'].map(lambda x: list(x))
-      # pred_pd_['encoded_label'] = pred_pd_['label'].map(lambda x: np.eye(2)[int(x)])
-
-      # y_pred_ = np.array(pred_pd_['probability'].tolist())
-      # y_true_ = np.array(pred_pd_['encoded_label'].tolist())
-
-      # self.test_result.precision, self.test_result.recall, self.test_result.thresholds = precision_recall_curve(y_true_[:,0], y_pred_[:,0])
-      # metrics = BinaryClassificationMetrics(predictionAndLabels)
-
-      # Area under precision-recall curve
-      # print("Area under PR = %s" % metrics.areaUnderPR)
-
-      # # Area under ROC curve
-      # print("Area under ROC = %s" % metrics.areaUnderROC)
-    # plt.show() 
 
   def predict(self, data):
     self.result.predictions = self.lrModel.transform(data)  
-    # self.predictions.select(prediction_cols).show(10)
+    # self.predictions.select(prediction_cols).show(10)/
 
   def get_area_under_ROC(self):
     evaluator = BinaryClassificationEvaluator()
@@ -307,20 +393,24 @@ class LogisticRegressionModel_spark():
 
 #%%
 if __name__=='main':
-    lr_test = LogisticRegressionModel_spark()    
+    lr_test = LogisticRegressionModel_spark(filepath='/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv')    
+    # lr_test = LogisticRegressionModel_spark()    
     filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
 else:
-    lr_test = LogisticRegressionModel_spark()    
-    print(str(lr_test.test_result))
+    # lr_test = LogisticRegressionModel_spark(filepath='/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv')    
+    # print(str(lr_test.test_result))
+    # attrib=lr_test.train_result.all_attributes
+    # plot_roc(attrib["FPR"],attrib["TPR"],attrib['areaUnderROC'])
 
+    pass
 # %%
 # import h2o
 # # h2o.init()
+# filepath='/home/ashleyubuntu/model_builder/output/new_exp_2_Exp_id_135.csv'
 # # h2o.init(max_mem_size = "8g")
 # h2o.init(max_mem_size = "8g")
 # # h2o.demo("glm")
 # # %%
-# filepath='/home/ashleyubuntu/model_builder/output/new_exp_2_Exp_id_135.csv'
 # training_data = h2o.import_file(filepath)
 # #%%
 # # Set the predictors and response:
@@ -383,5 +473,14 @@ def evaluation_metrics_mllib(model,training,test):
 # import pandas as pd
 # filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
 # pd.read_csv(filepath,nrows=50000).to_csv('subset_merged.csv')
+
+# %%
+
+# import pymysql.cursors
+# from plotly.offline import plot
+# import plotly.graph_objs as go
+
+# fig = px.bar(x=["a", "b", "c"], y=[1, 3, 2])
+# fig.show()
 
 # %%

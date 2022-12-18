@@ -23,9 +23,9 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse,reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel
 from .forms import ClassificationmodelForm, ExperimentForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
-
+from .Logisticregression_spark import plot_roc,plot_precision_recall
 
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
@@ -335,3 +335,51 @@ def index_j(request):
     # sleep(10)
     async_task("logistic_build.tasks.sleep_and_print", 10)
     return JsonResponse(json_payload)
+
+class ResultsClassificationmodelBaseView(View):
+    model = ResultsClassificationmodel
+    fields = '__all__'
+    success_url = reverse_lazy('all')
+
+
+class ResultsClassificationmodelDetailView(ResultsClassificationmodelBaseView, DetailView):
+    """View to list the details from one film.
+    Use the 'film' variable in the template to access
+    the specific film here and in the Views below"""
+
+    def get_context_data(self, **kwargs) :
+        from plotly.offline import plot
+        context=super().get_context_data(**kwargs)
+
+        def get_fpr_tpr(result, type ='train'):
+            view_dict={}
+            fpr=json.loads(getattr(getattr(result,type+'_results'),'FPR'))
+            tpr=json.loads(getattr(getattr(result,type+'_results'),'TPR'))
+            auc=getattr(getattr(result,type+'_results'),'areaUnderROC')
+            fig=plot_roc(fpr,tpr,auc)
+            plotly_plot_obj = plot({'data': fig}, output_type='div')
+            view_dict['rocPlot']=plotly_plot_obj
+            view_dict['auc']=auc
+            return view_dict
+
+        def get_precision_recall_plot(result, type ='train'):
+            view_dict={}
+            precision=json.loads(getattr(getattr(result,type+'_results'),'precision'))
+            recall=json.loads(getattr(getattr(result,type+'_results'),'recall'))
+            pr=getattr(getattr(result,type+'_results'),'areaUnderPR')
+            fig=plot_precision_recall(precision,recall,pr)
+
+            plotly_plot_obj = plot({'data': fig}, output_type='div')
+            view_dict['prPlot']=plotly_plot_obj
+            view_dict['pr']=pr
+            return view_dict
+        res =context['resultsclassificationmodel']
+
+
+        context['train_res_roc']=get_fpr_tpr(res,type='train')
+        context['test_res_roc']=get_fpr_tpr(res,type='test')
+
+        context['train_res_pr']=get_precision_recall_plot(res,type='train')
+        context['test_res_pr']=get_precision_recall_plot(res,type='test')
+
+        return context

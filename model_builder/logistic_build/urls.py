@@ -42,5 +42,6 @@ urlpatterns = [
     path('classificationmodel/create/', views.ClassificationmodelCreateView.as_view(), name='classificationmodel_create'),
     path('classificationmodel/<int:pk>/update/', views.ClassificationmodelUpdateView.as_view(), name='classificationmodel_update'),
     path('classificationmodel/<int:pk>/delete/', views.ClassificationmodelDeleteView.as_view(), name='classificationmodel_delete'),
-    path('index_j/', views.index_j, name='index_j')
+    path('index_j/', views.index_j, name='index_j'),
+    path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
 ]

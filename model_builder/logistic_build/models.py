@@ -306,7 +306,22 @@ class Manualvariableselection(Experiment):
                     self.experiment_status="DONE"
                     # spark.read.csv(output_dir)
         # os.makedirs("output",exist_ok=True)
+class ClassificationMetrics(models.Model):
+    type=models.CharField(max_length=100,blank=True,null=True)
+    FPR=models.TextField(max_length=20000,blank=True,null=True)
+    TPR=models.TextField(max_length=20000,blank=True,null=True)
+    areaUnderROC=models.FloatField(blank=True,null=True)
+    precision=models.TextField(max_length=20000,blank=True,null=True)
+    recall=models.TextField(max_length=20000,blank=True,null=True)
+    thresholds=models.TextField(max_length=20000,blank=True,null=True)
+    areaUnderPR=models.FloatField(blank=True,null=True)
+    experiment_id=models.IntegerField(blank=True,null=True)
 
+class ResultsClassificationmodel(models.Model):
+    coefficients=models.TextField(max_length=20000,blank=True,null=True)
+    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    train_results =models.ForeignKey(ClassificationMetrics, on_delete=models.SET_NULL, null=True,blank=True,related_name='train_results')
+    test_results =models.ForeignKey(ClassificationMetrics, on_delete=models.SET_NULL, null=True,blank=True,related_name='test_results')
 class Classificationmodel(Experiment):
     label_col=models.CharField(max_length=100,blank=True,null=True)
     feature_cols=models.TextField(max_length=20000,blank=True,null=True)
@@ -315,6 +330,7 @@ class Classificationmodel(Experiment):
     feature_cols=models.TextField(max_length=20000,blank=True,null=True)
     ignored_columns=models.TextField(max_length=20000,blank=True,null=True)
     cross_validation=models.BooleanField(default=False)
+    results =models.ForeignKey(ResultsClassificationmodel, on_delete=models.SET_NULL, null=True,blank=True)
 
     def get_absolute_url(self):
         if self.experiment_status:
@@ -344,6 +360,13 @@ class Classificationmodel(Experiment):
                         super(Classificationmodel, self).save(*args, **kwargs)
                         # async_task("logistic_build.tasks.do_stationarity_test_django_q", self.experiment_id)
                         logistic_results= t.run_logistic_regression(self.experiment_id)
+                        train_results=ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
+                        test_results=ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
+
+                        self.results=ResultsClassificationmodel.objects.create(train_results=train_results,test_results=test_results,
+                                    coefficients=json.dumps(logistic_results.overall_result.coefficients),
+                                    feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
+                        
 
             # if self.experiment_status and self.experiment_status=='DONE':
             #     self.create_variables_with_stationarity_results()
@@ -356,13 +379,3 @@ class Classificationmodel(Experiment):
                 # df=self.subset_data()
             super(Classificationmodel, self).save(*args, **kwargs)
 
-# class Results(models.Model):
-#        self.train_auc=0
-#        self.test_auc=0
-#        self.beta_coefficients=None
-#        self.train_precision_recall=None
-#        self.test_precision_recall=None
-#        self.plot_test_pr_curve=None
-#        self.plot_train_pr_curve=None
-#        self.plot_train_roc=None
-#        self.plot_test_roc=None
