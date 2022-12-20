@@ -23,10 +23,10 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse,reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,Notification
 from .forms import ClassificationmodelForm, ExperimentForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
 from .Logisticregression_spark import plot_roc,plot_precision_recall
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
     # return render(request, 'logistic_build/index.html')
@@ -68,7 +68,7 @@ def upload_csv(request):
 
 
 
-class TraindataBaseView(View):
+class TraindataBaseView(LoginRequiredMixin,View):
     model = Traindata
     fields = '__all__'
     success_url = reverse_lazy('all')
@@ -97,23 +97,27 @@ def experiment_start(request):
     if "GET" == request.method:
         return render(request, "logistic_build/experiment_start.html")
 
-class ExperimentFormView(CreateView):
+class ExperimentFormView(LoginRequiredMixin,CreateView):
     # model =Experiment
     form_class=ExperimentForm
     # fields= '__all__'
     template_name = 'logistic_build/stationarity_form.html'
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
     # def __init__(self, *args, **kwargs):
     #     super(ExperimentFormView, self).__init__(*args, **kwargs)
     # @method_decorator(login_required)
     # def dispatch(self, *args, **kwargs):
     #     return super(PlaceEventFormView, self).dispatch(*args, **kwargs)
 
-    # def get_form_kwargs(self):
-    #     kwargs = super(ExperimentFormView, self).get_form_kwargs()
+    def get_form_kwargs(self):
+        kwargs = super(ExperimentFormView, self).get_form_kwargs()
         
-    #     return kwargs
+        return kwargs
 
-class ExperimentBaseView(View):
+class ExperimentBaseView(LoginRequiredMixin,View):
     Form = Experiment
     fields = '__all__'
     success_url = reverse_lazy('all')
@@ -138,6 +142,9 @@ class ExperimentDetailView(ExperimentBaseView, DetailView):
 
 class ExperimentCreateView(ExperimentBaseView, CreateView):
     """View to create a new film"""
+    def get_context_data(self, **kwargs):
+        context=super().get_context_data(**kwargs)
+        return context
     # fields= ['name','traindata','do_kpss','do_adf','significance' ,'do_create_data']
 class ExperimentUpdateView(ExperimentBaseView, UpdateView):
     """View to update a film"""
@@ -158,7 +165,7 @@ class ExperimentDeleteView(ExperimentBaseView, DeleteView):
     #     # queryset =Experiment.objects.exclude(experiment_type='Input')
     #     queryset=Experiment.objects.get(pk=self.__dict__['kwargs']['pk'])
     #     return queryset
-class StationarityBaseView(View):
+class StationarityBaseView(LoginRequiredMixin,View):
     model = Stationarity
     fields = '__all__'
     success_url = reverse_lazy('all')
@@ -173,7 +180,10 @@ class StationarityDetailView(StationarityBaseView, DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['created_by']=context['stationarity'].created_by.username
+        return context
 class StationarityCreateView(StationarityBaseView, CreateView):
     """View to create a new film"""
     fields= [ "name", "traindata", "do_kpss", "do_adf", "significance" ,"do_create_data", "previous_experiment",]
@@ -195,7 +205,7 @@ class VariablesBaseView(View):
     fields = '__all__'
     success_url = reverse_lazy('all')
 
-class VariablesListView(VariablesBaseView, ListView):
+class VariablesListView(LoginRequiredMixin,VariablesBaseView, ListView):
     """View to list all films.
     Use the 'film_list' variable in the template
     to access all Variables objects"""
@@ -208,18 +218,18 @@ class VariablesListView(VariablesBaseView, ListView):
         # return qs.filter(experiment_id=7)
 
 
-class VariablesDetailView(VariablesBaseView, DetailView):
+class VariablesDetailView(LoginRequiredMixin,VariablesBaseView, DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
 
-class VariablesCreateView(VariablesBaseView, CreateView):
+class VariablesCreateView(LoginRequiredMixin,VariablesBaseView, CreateView):
     """View to create a new film"""
 
-class VariablesUpdateView(VariablesBaseView, UpdateView):
+class VariablesUpdateView(LoginRequiredMixin,VariablesBaseView, UpdateView):
     """View to update a film"""
 
-class VariablesDeleteView(VariablesBaseView, DeleteView):
+class VariablesDeleteView(LoginRequiredMixin,VariablesBaseView, DeleteView):
     """View to delete a film"""
 
 
@@ -228,21 +238,24 @@ class ManualvariableselectionBaseView(View):
     fields = '__all__'
     success_url = reverse_lazy('all')
 
-class ManualvariableselectionListView(ManualvariableselectionBaseView, ListView):
+class ManualvariableselectionListView(LoginRequiredMixin,ManualvariableselectionBaseView, ListView):
     """View to list all films.
     Use the 'film_list' variable in the template
     to access all Manualvariableselection objects"""
 
-class ManualvariableselectionDetailView(ManualvariableselectionBaseView, DetailView):
+class ManualvariableselectionDetailView(LoginRequiredMixin,ManualvariableselectionBaseView, DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
-
-class ManualvariableselectionCreateView(ManualvariableselectionBaseView, CreateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['created_by']=context['manualvariableselection'].created_by.username
+        return context
+class ManualvariableselectionCreateView(LoginRequiredMixin,ManualvariableselectionBaseView, CreateView):
     """View to create a new film"""
 
     fields= ['name','traindata']
-class ManualvariableselectionUpdateView(UpdateView):
+class ManualvariableselectionUpdateView(LoginRequiredMixin,UpdateView):
     """View to update a film"""
     model=Manualvariableselection
     form_class=ManualvariableselectionForm
@@ -259,10 +272,10 @@ class ManualvariableselectionUpdateView(UpdateView):
     def get_form_kwargs(self):
         kwargs = super(ManualvariableselectionUpdateView, self).get_form_kwargs()
         return kwargs
-class ManualvariableselectionDeleteView(ManualvariableselectionBaseView, DeleteView):
+class ManualvariableselectionDeleteView(LoginRequiredMixin,ManualvariableselectionBaseView, DeleteView):
     """View to delete a film"""
 
-class ManualvariableselectionFormView(CreateView):
+class ManualvariableselectionFormView(LoginRequiredMixin,CreateView):
     # model =Experiment
     form_class=ManualvariableselectionForm
     # fields= '__all__'
@@ -274,21 +287,24 @@ class ClassificationmodelBaseView(View):
     fields = '__all__'
     success_url = reverse_lazy('all')
 
-class ClassificationmodelListView(ClassificationmodelBaseView, ListView):
+class ClassificationmodelListView(LoginRequiredMixin,ClassificationmodelBaseView, ListView):
     """View to list all films.
     Use the 'film_list' variable in the template
     to access all Classificationmodel objects"""
 
-class ClassificationmodelDetailView(ClassificationmodelBaseView, DetailView):
+class ClassificationmodelDetailView(LoginRequiredMixin,ClassificationmodelBaseView, DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
-
-class ClassificationmodelCreateView(ClassificationmodelBaseView, CreateView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['created_by']=context['classificationmodel'].created_by.username
+        return context
+class ClassificationmodelCreateView(LoginRequiredMixin,ClassificationmodelBaseView, CreateView):
     """View to create a new film"""
     fields= ['name','traindata']
 
-class ClassificationmodelUpdateView(UpdateView):
+class ClassificationmodelUpdateView(LoginRequiredMixin,UpdateView):
     """View to update a film"""
     model=Classificationmodel
     form_class=ClassificationmodelForm
@@ -305,7 +321,7 @@ class ClassificationmodelUpdateView(UpdateView):
     def get_form_kwargs(self):
         kwargs = super(ClassificationmodelUpdateView, self).get_form_kwargs()
         return kwargs
-class ClassificationmodelDeleteView(ClassificationmodelBaseView, DeleteView):
+class ClassificationmodelDeleteView(LoginRequiredMixin,ClassificationmodelBaseView, DeleteView):
     """View to delete a film"""
     template_name='logistic_build/experiment_confirm_delete.html'
     
@@ -315,7 +331,7 @@ class ClassificationmodelDeleteView(ClassificationmodelBaseView, DeleteView):
         return context
 
 
-class ClassificationmodelFormView(CreateView):
+class ClassificationmodelFormView(LoginRequiredMixin,CreateView):
     # model =Experiment
     form_class=ClassificationmodelForm
     # fields= '__all__'
@@ -342,7 +358,7 @@ class ResultsClassificationmodelBaseView(View):
     success_url = reverse_lazy('all')
 
 
-class ResultsClassificationmodelDetailView(ResultsClassificationmodelBaseView, DetailView):
+class ResultsClassificationmodelDetailView(LoginRequiredMixin,ResultsClassificationmodelBaseView, DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
@@ -381,5 +397,64 @@ class ResultsClassificationmodelDetailView(ResultsClassificationmodelBaseView, D
 
         context['train_res_pr']=get_precision_recall_plot(res,type='train')
         context['test_res_pr']=get_precision_recall_plot(res,type='test')
-
+        unread_notifications = Notification.objects.filter(is_read=False).count()
+        context["unread_notifications"] = unread_notifications
         return context
+
+
+from django.shortcuts import render
+
+# Create your views here.
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+from django.forms.utils import ErrorList
+from django.http import HttpResponse
+from .forms import LoginForm, SignUpForm
+
+def login_view(request):
+    form = LoginForm(request.POST or None)
+
+    msg = None
+
+    if request.method == "POST":
+
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect("/")
+            else:    
+                msg = 'Invalid credentials'    
+        else:
+            msg = 'Error validating the form'    
+
+    return render(request, "accounts/login.html", {"form": form, "msg" : msg})
+
+def register_user(request):
+
+    msg     = None
+    success = False
+
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get("username")
+            raw_password = form.cleaned_data.get("password1")
+            user = authenticate(username=username, password=raw_password)
+
+            msg     = 'User created - please <a href="/login">login</a>.'
+            success = True
+            
+            #return redirect("/login/")
+
+        else:
+            msg = 'Form is not valid'    
+    else:
+        form = SignUpForm()
+
+    return render(request, "accounts/register.html", {"form": form, "msg" : msg, "success" : success })
+

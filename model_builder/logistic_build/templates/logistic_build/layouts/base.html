@@ -41,7 +41,6 @@
 
 </head>
 <body>
-    {% block content %}{% endblock content %}
     <!-- {% block file_input %}{% endblock %}  -->
     <!-- [ Pre-loader ] start -->
     <div class="loader-bg">
@@ -49,11 +48,12 @@
             <div class="loader-fill"></div>
         </div>
     </div>
-
+    
     <!-- [ Pre-loader ] End -->
     {% include 'logistic_build/includes/sidebar.html' %}
-
+    
     {% include 'logistic_build/includes/navigation.html' %}
+    {% block content %}{% endblock content %}
     
 
 

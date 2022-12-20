@@ -21,3 +21,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
 ]
+admin.site.site_header = 'Model Builder Administration'                    # default: "Django Administration"
+admin.site.index_title = 'Model Builder'                 # default: "Site administration"
+admin.site.site_title = 'Model builder site admin' # default: "Django site admin"
+
+
+urlpatterns += [
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('__debug__/', include('debug_toolbar.urls')),
+]

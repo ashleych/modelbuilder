@@ -16,17 +16,25 @@
                 <tbody>
 
                     {% for label, value in manualvariableselection.get_fields  %}
-                    {% if not label == "colnames" %}
+                    {% if not label == "colnames" and not label == "created by" %}
                         <tr>
                             <td>{{label | upper}}</td>
                             <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
                         </tr>
                     {% endif %}
+
+                    {% if label == "created by" %}
+                    
+                        <tr>
+                            <td>{{label | upper}}</td>
+                            <td style="word-break:break-all;style="width: 50%"">{{created_by}}</td>
+                        </tr>
+                    
+                    {% endif %}
                     {% endfor %}
                         
                 </tbody>
             </table>
-            <!-- <p><strong>Variable Selection Tests model:</strong> <a href="{{ manualvariableselection.get_absolute_url }}">{{ manualvariableselection.traindata.train_path}}</a></p> -->
 
 
         </div>

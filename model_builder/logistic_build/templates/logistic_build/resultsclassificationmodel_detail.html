@@ -6,26 +6,12 @@
     <div class="col">
         <h1 class="text-center">resultsclassificationmodel Tests model Details </h1>
         <div class="d-flex justify-content-center">
-            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
-                <thead>
-                    <tr>
-                        <th scope="col"></th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
+            {% if unread_notifications %}
+                <div>
+                    You have {{ unread_notifications }} unread notifications 
+                </div>
+            {% endif %}
 
-                    {% for label, value in resultsclassificationmodel.get_fields  %}
-                    {% if not label == "colnames" %}
-                        <tr>
-                            <td>{{label | upper}}</td>
-                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
-                        </tr>
-                    {% endif %}
-                    {% endfor %}
-                        
-                </tbody>
-            </table>
 
 
         </div>

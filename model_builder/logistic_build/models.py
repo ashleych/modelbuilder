@@ -14,7 +14,7 @@ from datetime import datetime
 from django.conf import settings
 from pathlib import Path
 from django.utils import timezone
-
+from django.contrib.auth.models import User
 import os
 import glob
 import datatable as dt
@@ -72,6 +72,9 @@ class Traindata(models.Model):
 
 
 class Experiment(models.Model):
+
+    class Meta:
+        ordering = ['-created_on_date']
     EXPERIMENT_TYPE = [
         ('input', 'Input'),
         ("columnformatchange",'Column format change'),
@@ -96,7 +99,9 @@ class Experiment(models.Model):
     run_now=models.BooleanField(default=False)
     run_start_time= models.DateTimeField( null=True, blank=True)
     run_end_time= models.DateTimeField(null=True, blank=True)
-    
+    created_by = models.ForeignKey(User,
+        null=True, blank=True, on_delete=models.SET_NULL)
+
     def __str__(self):
         return self.name if self.name else ''
 
@@ -106,7 +111,10 @@ class Experiment(models.Model):
     def get_absolute_url(self):
         return reverse('experiment_detail', args=[str(self.experiment_id)])
     def save(self, *args, **kwargs):
-            # self.slug = slugify(self.title)
+            # if not obj.pk:
+            #     # Only set added_by during the first save.
+            #     obj.added_by = request.user
+            # super().save_model(request, obj, form, change)
             super(Experiment, self).save(*args, **kwargs)
             if not self.artefacts_directory:
                 self.artefacts_directory =os.path.join("artefacts","experiment_"+str(self.experiment_id)+"_"+self.name)
@@ -367,7 +375,6 @@ class Classificationmodel(Experiment):
                                     coefficients=json.dumps(logistic_results.overall_result.coefficients),
                                     feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
                         
-
             # if self.experiment_status and self.experiment_status=='DONE':
             #     self.create_variables_with_stationarity_results()
             #     if self.do_create_data:
@@ -376,6 +383,36 @@ class Classificationmodel(Experiment):
                     
                         self.experiment_status='DONE'
                         self.run_end_time= timezone.now()
+                        super(Classificationmodel, self).save(*args, **kwargs)
+                        experiment=Experiment.objects.get(pk=self.experiment_id)
+                        notification=Notification.objects.create(is_read=False,message='Experiment Successful',experiment=experiment)
+                        # Notification.create 
                 # df=self.subset_data()
             super(Classificationmodel, self).save(*args, **kwargs)
 
+class Notification(models.Model):
+    is_read = models.BooleanField(default=False)
+    message = models.TextField()
+    experiment=models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True,blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    # user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+import django_filters
+
+class ExperimentFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='iexact')
+    experiment_status = django_filters.ChoiceFilter(choices=Experiment.STATUS_TYPE)
+    experiment_type = django_filters.ChoiceFilter(choices=Experiment.EXPERIMENT_TYPE)
+    # experiment_status = django_filters.CharFilter(lookup_expr='iexact')
+    # release_year__gt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__gt')
+    # release_year__lt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__lt')
+
+    class Meta:
+        model = Experiment
+        fields = ['experiment_type', 'name']
+        # fields = {
+        #     'experiment_type': [ 'contains'],
+        #     'name': ['contains'],
+        #     'created_on_date': ['exact', 'year__gt'],
+        # }

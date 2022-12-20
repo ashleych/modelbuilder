@@ -5,3 +5,6 @@ model_builder_venv/
 __pycache__
 */*/migrations/
 *.csv
+*.svg
+*/static/*
+*/login_assets/*

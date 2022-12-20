@@ -9,6 +9,7 @@ class ExperimentForm(ModelForm):
     class Meta:
         model = Experiment
         fields = ['name', 'experiment_type','previous_experiment']
+        
         # fields = ['name', 'experiment_type', 'previous_experiment']
     # def __init__(self, *args, **kwargs):
     #     # user = kwargs.pop('place_user')
@@ -20,7 +21,7 @@ class ExperimentForm(ModelForm):
         m = super(ExperimentForm, self).save(commit=False, *args, **kwargs)
 
         models_dict = {'stationarity' : Stationarity, 'manualvariableselection' :Manualvariableselection,'classificationmodel':Classificationmodel}
-        s=models_dict[m.experiment_type].objects.create(experiment_type=m.experiment_type, name=m.name,previous_experiment=m.previous_experiment)
+        s=models_dict[m.experiment_type].objects.create(experiment_type=m.experiment_type, name=m.name,previous_experiment=m.previous_experiment,created_by=m.created_by)
         if m.previous_experiment:
             s.traindata = m.previous_experiment.output_data
             s.save()
@@ -58,3 +59,61 @@ class ClassificationmodelForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+
+
+
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Username",
+                "class": "form-control"
+            }
+        ))
+    password = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "Password",
+                "class": "form-control"
+            }
+        ))
+
+
+class SignUpForm(UserCreationForm):
+    username = forms.CharField(
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Username",
+                "class": "form-control"
+            }
+        ))
+    email = forms.EmailField(
+        widget=forms.EmailInput(
+            attrs={
+                "placeholder": "Email",
+                "class": "form-control"
+            }
+        ))
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "Password",
+                "class": "form-control"
+            }
+        ))
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "Password check",
+                "class": "form-control"
+            }
+        ))
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')

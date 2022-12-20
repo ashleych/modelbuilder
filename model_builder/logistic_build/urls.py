@@ -1,6 +1,7 @@
 from django.urls import path
-
+from django_filters.views import FilterView
 from . import views
+from .models import ExperimentFilter
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -44,4 +45,7 @@ urlpatterns = [
     path('classificationmodel/<int:pk>/delete/', views.ClassificationmodelDeleteView.as_view(), name='classificationmodel_delete'),
     path('index_j/', views.index_j, name='index_j'),
     path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
+    # path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
+    path('register/', views.register_user,name='register'),
+    path("experimentlist/", FilterView.as_view(filterset_class=ExperimentFilter), name="experiment-list")
 ]
