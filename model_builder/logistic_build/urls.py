@@ -12,7 +12,8 @@ urlpatterns = [
     path('traindata/<int:pk>/update/', views.TraindataUpdateView.as_view(), name='traindata_update'),
     path('traindata/<int:pk>/delete/', views.TraindataDeleteView.as_view(), name='traindata_delete'),
     
-    path('experiment', views.ExperimentListView.as_view(), name='experiment_all'),
+    # path('experiment', views.ExperimentListView.as_view(), name='experiment_all'),
+    path("experiment/", FilterView.as_view(filterset_class=ExperimentFilter), name="experiment-list"),
     path('experiment/<int:pk>/detail', views.ExperimentDetailView.as_view(), name='experiment_detail'),
     path('experiment/create/', views.ExperimentCreateView.as_view(), name='experiment_create'),
     # path('experiment/start/', views.experiment_start, name='experiment_start'),
@@ -47,5 +48,4 @@ urlpatterns = [
     path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
     # path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
     path('register/', views.register_user,name='register'),
-    path("experimentlist/", FilterView.as_view(filterset_class=ExperimentFilter), name="experiment-list")
 ]

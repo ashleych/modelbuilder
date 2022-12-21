@@ -402,15 +402,16 @@ import django_filters
 
 class ExperimentFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='iexact')
-    experiment_status = django_filters.ChoiceFilter(choices=Experiment.STATUS_TYPE)
-    experiment_type = django_filters.ChoiceFilter(choices=Experiment.EXPERIMENT_TYPE)
+    experiment_status = django_filters.ChoiceFilter(choices=Experiment.STATUS_TYPE,widget=django_filters.widgets.LinkWidget)
+    experiment_type = django_filters.ChoiceFilter(choices=Experiment.EXPERIMENT_TYPE,widget=django_filters.widgets.LinkWidget)
+    # created_on_date= django_filters.DateFromToRangeFilter(widget=django_filters.widgets.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}))
     # experiment_status = django_filters.CharFilter(lookup_expr='iexact')
     # release_year__gt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__gt')
     # release_year__lt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__lt')
 
     class Meta:
         model = Experiment
-        fields = ['experiment_type', 'name']
+        fields = ['experiment_type', 'name','experiment_status']
         # fields = {
         #     'experiment_type': [ 'contains'],
         #     'name': ['contains'],
