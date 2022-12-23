@@ -52,4 +52,5 @@ urlpatterns = [
     path('notificationmodelbuild', views.NotificationModelBuildListView.as_view(), name='notificationmodelbuild'),
     path('notificationmodelbuild/<int:pk>/update/', views.NotificationModelBuildUpdateView.as_view(), name='notificationmodelbuild_update'),
     path('notificationmodelbuild/<int:pk>/delete/', views.NotificationModelBuildDeleteView.as_view(), name='notificationmodelbuild_delete'),
+    path('notificationmodelbuild/mark_as_read', views.notifications_mark_as_read, name='notificationmodelbuild_markasread'),
 ]

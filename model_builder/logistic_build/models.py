@@ -385,25 +385,27 @@ class Classificationmodel(Experiment):
                         self.run_end_time= timezone.now()
                         super(Classificationmodel, self).save(*args, **kwargs)
                         experiment=Experiment.objects.get(pk=self.experiment_id)
-                        notification=NotificationModelBuild.objects.create(is_read=False,message='Experiment Successful',experiment=experiment,created_by=experiment.created_by)
+                        notification=NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
                         # Notification.create 
                 # df=self.subset_data()
             super(Classificationmodel, self).save(*args, **kwargs)
 
 class NotificationModelBuildManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_read=False)
+        return super().get_queryset()
+        # return super().get_queryset().filter(is_read=False)
 
 class NotificationModelBuild(models.Model):
     is_read = models.BooleanField(default=False)
     message = models.TextField()
     experiment=models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True,blank=True)
+    experiment_type= models.CharField(max_length=100,blank=True,null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     # user = models.ForeignKey(User, on_delete=models.CASCADE)
     objects = NotificationModelBuildManager()
     created_by = models.ForeignKey(User,null=True, blank=True, on_delete=models.CASCADE)
-
-
+    class Meta:
+        ordering = ['-timestamp' ]
 import django_filters
 
 class ExperimentFilter(django_filters.FilterSet):

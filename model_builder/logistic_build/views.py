@@ -66,6 +66,26 @@ def upload_csv(request):
         # Variables.objects.create(var_name=col,file_id=macro_file_obj,experiment=e1,variable_type='Independent')
     return HttpResponse("Success !")
 
+from django.http import JsonResponse
+import json
+
+def notifications_mark_as_read(request):
+        # data_from_post = json.load(request)['post_data'] #Get data from POST request
+        #Do something with the data from the POST request
+        #If sending data back to the view, create the data dictionary
+        # data = {
+        #     'my_data':'data_to_display',
+        # }
+        # NotificationModelBuild.objects.all()
+
+        # NotificationModelBuild.objects.update_or_create(
+        #                                data_available_or_not=True,
+
+        notifications = NotificationModelBuild.objects.filter(created_by=request.user)
+        if notifications:
+            notifications.update(is_read=True)  
+        # return JsonResponse(data)
+        return HttpResponse("Success !")
 
 
 class TraindataBaseView(LoginRequiredMixin,View):
@@ -490,3 +510,8 @@ class NotificationModelBuildUpdateView(LoginRequiredMixin,NotificationModelBuild
 
 class NotificationModelBuildDeleteView(LoginRequiredMixin,NotificationModelBuildBaseView, DeleteView):
     """View to delete a film"""
+
+
+
+
+

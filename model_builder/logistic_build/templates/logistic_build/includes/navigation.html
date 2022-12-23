@@ -55,54 +55,70 @@
                             <div class="noti-head">
                                 <h6 class="d-inline-block m-b-0">Notifications</h6>
                                 <div class="float-right">
-                                    <a href="javascript:" class="m-r-10">mark as read</a>
+                                    <a href="javascript:mark_as_read()" class="m-r-10">mark as read</a>
                                     <a href="javascript:">clear all</a>
+                                </div>
                             </div>
-                        </div>
-                        <ul class="noti-body">
-                            <li class="n-title">
-                                <p class="m-b-0">NEW</p>
-                            </li>
-                            <li class="notification">
+                            
+                            {% total_notification  as total_notification %}
+                            <ul class="noti-body">
+                                <li class="n-title">
+                                    <p class="m-b-0">NEW</p>
+                                </li>
+                                {% if total_notification.new_notifications %}
+                                {% for n,time_elapsed in total_notification.new_notifications %}
+                                <li class="notification">
                                 <div class="media">
-                                    <img class="img-radius" src="{% static 'logistic_build/assets/images/user/avatar-1.jpg' %}"  
+                                    <img class="img-radius" src="{% static 'logistic_build/assets/images/user/avatar-2.jpg' %}"  
                                     alt="Generic placeholder image">
-                                    <div class="media-body">
-                                        <p><strong>John Doe</strong><span class="n-time text-muted"><i
-                                            class="icon feather icon-clock m-r-10"></i>30 min</span></p>
-                                            <p>New ticket Added</p>
-                                            <p> Have added </p>
+                                    {% current_time "%Y-%m-%d %I:%M %p" as the_time %}
+                                    <div class="media-body">                                           
+                                        <p><strong><a href="{% url n.experiment.experiment_type|add:'_detail' n.experiment.experiment_id  %}">{{n.experiment.name}}</a></strong><span class="n-time text-muted"><i
+                                            class="icon feather icon-clock m-r-10"></i> {{ time_elapsed }}</span></p>
+                                            <p>Experiment was created by  {{ n.created_by }}</p>
+                                            <p>{{ n.message }}</p>
                                         </div>
                                     </div>
                                 </li>
+                                {% endfor %}
+                                {% else %}
+                                <p>No new notifications </p>
+                               {% endif %} 
                                 <li class="n-title">
                                     <p class="m-b-0">EARLIER</p>
                                 </li>
-                                <li class="notification">
-                                    <div class="media">
-                                        <img class="img-radius" src="{% static 'logistic_build/assets/images/user/avatar-2.jpg' %}"  
-                                        alt="Generic placeholder image">
-                                        {% total_notification  as notification %}
-                                        {% current_time "%Y-%m-%d %I:%M %p" as the_time %}
-                                        <div class="media-body">
-                                            <p><strong><a href="{% url notification.type.0|add:'_detail' notification.experiments.0.experiment_id  %}">{{notification.names.0}}</a></strong><span class="n-time text-muted"><i
-                                            class="icon feather icon-clock m-r-10"></i>{{notification.time_since_creation.0 }} </span></p>
-                                                <p>Experiment was created by  {{ notification.created_by.0 }}</p>
-                                                <p>{{ notification.messages.0 }}</p>
-                                            </div>
+                        {% if total_notification.old_notifications %}        
+                            {% for n,time_elapsed in total_notification.old_notifications %}
+
+                            <li class="notification">
+                                <div class="media">
+                                    <img class="img-radius" src="{% static 'logistic_build/assets/images/user/avatar-2.jpg' %}"  
+                                    alt="Generic placeholder image">
+                                    {% current_time "%Y-%m-%d %I:%M %p" as the_time %}
+                                    <div class="media-body">                                           
+                                        <p><strong><a href="{% url n.experiment.experiment_type|add:'_detail' n.experiment.experiment_id  %}">{{n.experiment.name}}</a></strong><span class="n-time text-muted"><i
+                                            class="icon feather icon-clock m-r-10"></i> {{ time_elapsed }}</span></p>
+                                            <p>Experiment was created by  {{ n.created_by }}</p>
+                                            <p>{{ n.message }}</p>
                                         </div>
-                                    </li>
-                                    <li class="notification">
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+
+                                <p>No old notifications</p>
+                            {% endif %}
+                                <li class="notification">
                                         <div class="media">
                                             <img class="img-radius" src="{% static 'logistic_build/assets/images/user/avatar-3.jpg' %}"  
                                             alt="Generic placeholder image">
                                             <div class="media-body">
                                                 <p><strong>Sara Soudein</strong><span class="n-time text-muted"><i
                                                 class="icon feather icon-clock m-r-10"></i>30 min</span></p>
-                                        <p>currently login</p>
-                                    </div>
-                                </div>
-                            </li>
+                                                <p>currently login</p>
+                                            </div>
+                                        </div>
+                                </li>
                         </ul>
                         <div class="noti-footer">
                             <a href="{% url 'notificationmodelbuild' %}">show all</a>
