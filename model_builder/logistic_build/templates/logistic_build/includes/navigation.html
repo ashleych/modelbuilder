@@ -47,7 +47,7 @@
                     <input type="checkbox" id="theme-switch" class="d-none">
                 </label>
             </li>
-            <li>LoginRequiredMixin
+            <li>
                 <div class="dropdown">
                     <a class="dropdown-toggle" href="javascript:" data-toggle="dropdown"><i
                         class="icon feather icon-bell"></i></a>
@@ -55,8 +55,8 @@
                             <div class="noti-head">
                                 <h6 class="d-inline-block m-b-0">Notifications</h6>
                                 <div class="float-right">
-                                    <a href="javascript:mark_as_read()" class="m-r-10">mark as read</a>
-                                    <a href="javascript:">clear all</a>
+                                    <a id='markasread' data-url="{% url 'notificationmodelbuild_markasread' %}" href="javascript:mark_as_read()" class="m-r-10">mark as read</a>
+                                    <a id='delete' data-url="{% url 'notificationmodelbuild_delete' %}" href="javascript:notifications_delete()">clear all</a>
                                 </div>
                             </div>
                             
@@ -108,17 +108,7 @@
 
                                 <p>No old notifications</p>
                             {% endif %}
-                                <li class="notification">
-                                        <div class="media">
-                                            <img class="img-radius" src="{% static 'logistic_build/assets/images/user/avatar-3.jpg' %}"  
-                                            alt="Generic placeholder image">
-                                            <div class="media-body">
-                                                <p><strong>Sara Soudein</strong><span class="n-time text-muted"><i
-                                                class="icon feather icon-clock m-r-10"></i>30 min</span></p>
-                                                <p>currently login</p>
-                                            </div>
-                                        </div>
-                                </li>
+
                         </ul>
                         <div class="noti-footer">
                             <a href="{% url 'notificationmodelbuild' %}">show all</a>
