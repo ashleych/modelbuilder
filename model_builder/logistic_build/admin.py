@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,Notification
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,NotificationModelBuild
 
 
 admin.site.register(Traindata)
@@ -12,7 +12,7 @@ admin.site.register(Stationarity)
 admin.site.register(Manualvariableselection)
 admin.site.register(Classificationmodel)
 admin.site.register(ResultsClassificationmodel)
-admin.site.register(Notification)
+admin.site.register(NotificationModelBuild)
 
 
 # class ExperimentAdmin(admin.ModelAdmin):

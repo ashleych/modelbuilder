@@ -3,7 +3,7 @@ input/
 output/
 model_builder_venv/
 __pycache__
-*/*/migrations/
+# */*/migrations/
 *.csv
 *.svg
 */static/*

@@ -1,10 +1,9 @@
 {% extends "logistic_build/layouts/base.html" %}
-
 {% block title %} Dashboard {% endblock %} 
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
-
+{% load logistic_build_tags %}
 {% block content %}
 
     <!-- [ Main Content ] start -->
@@ -26,6 +25,7 @@
                                     <div class="card daily-sales">
                                         <div class="card-block">
                                             <div class="row d-flex align-items-center">
+             
         
                                                 {% block file_input %}{% endblock file_input %}
                                                 {% block list_view_content%}{% endblock  %}

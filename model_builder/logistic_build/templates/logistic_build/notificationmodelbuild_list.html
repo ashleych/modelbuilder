@@ -1,0 +1,32 @@
+{% extends 'logistic_build/index.html' %}
+
+{% block  list_view_content%}
+
+<div class="" style="width: 70%;">
+    <div class="col">
+        <h3 class="text-center">Notifications</h3>
+        <div class="d-flex justify-content-center">
+        {% if notificationmodelbuild_list %}
+            <ul>
+                {% for notificationmodelbuild in notificationmodelbuild_list %}
+            <li>
+                <a href="{{ notificationmodelbuild.experiment.get_absolute_url }}">{{ notificationmodelbuild.experiment }}</a> {{notificationmodelbuild.experiment.name}}   {{notificationmodelbuild.message}}
+            </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>There are no Notifications.</p>
+        {% endif %}         
+  
+        </div>
+<div>
+
+</div>
+        <div class="d-flex justify-content-center">
+            <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
+        </div>
+    </div>
+        
+</div>
+
+{% endblock  %}

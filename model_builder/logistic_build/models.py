@@ -91,16 +91,16 @@ class Experiment(models.Model):
     # start_date = models.DateField(null=True, blank=True)
     created_on_date= models.DateTimeField(auto_now_add=True, null=True, blank=True)
     experiment_status=models.CharField(max_length=20,choices=STATUS_TYPE,null=True, blank=True)
-    traindata = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,blank=True, related_name ='input_train_data')
+    traindata = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True,blank=True, related_name ='input_train_data')
     do_create_data =models.BooleanField(default=True)
     enable_spark=models.BooleanField(default=True)
-    output_data = models.ForeignKey(Traindata, on_delete=models.SET_NULL, null=True,blank=True,related_name ='output_data')
-    previous_experiment = models.ForeignKey('self',null=True,blank=True,on_delete=models.SET_NULL)
+    output_data = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True,blank=True,related_name ='output_data')
+    previous_experiment = models.ForeignKey('self',null=True,blank=True,on_delete=models.CASCADE)
     run_now=models.BooleanField(default=False)
     run_start_time= models.DateTimeField( null=True, blank=True)
     run_end_time= models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(User,
-        null=True, blank=True, on_delete=models.SET_NULL)
+        null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name if self.name else ''
@@ -328,8 +328,8 @@ class ClassificationMetrics(models.Model):
 class ResultsClassificationmodel(models.Model):
     coefficients=models.TextField(max_length=20000,blank=True,null=True)
     feature_cols=models.TextField(max_length=20000,blank=True,null=True)
-    train_results =models.ForeignKey(ClassificationMetrics, on_delete=models.SET_NULL, null=True,blank=True,related_name='train_results')
-    test_results =models.ForeignKey(ClassificationMetrics, on_delete=models.SET_NULL, null=True,blank=True,related_name='test_results')
+    train_results =models.ForeignKey(ClassificationMetrics, on_delete=models.CASCADE, null=True,blank=True,related_name='train_results')
+    test_results =models.ForeignKey(ClassificationMetrics, on_delete=models.CASCADE, null=True,blank=True,related_name='test_results')
 class Classificationmodel(Experiment):
     label_col=models.CharField(max_length=100,blank=True,null=True)
     feature_cols=models.TextField(max_length=20000,blank=True,null=True)
@@ -338,7 +338,7 @@ class Classificationmodel(Experiment):
     feature_cols=models.TextField(max_length=20000,blank=True,null=True)
     ignored_columns=models.TextField(max_length=20000,blank=True,null=True)
     cross_validation=models.BooleanField(default=False)
-    results =models.ForeignKey(ResultsClassificationmodel, on_delete=models.SET_NULL, null=True,blank=True)
+    results =models.ForeignKey(ResultsClassificationmodel, on_delete=models.CASCADE, null=True,blank=True)
 
     def get_absolute_url(self):
         if self.experiment_status:
@@ -385,17 +385,23 @@ class Classificationmodel(Experiment):
                         self.run_end_time= timezone.now()
                         super(Classificationmodel, self).save(*args, **kwargs)
                         experiment=Experiment.objects.get(pk=self.experiment_id)
-                        notification=Notification.objects.create(is_read=False,message='Experiment Successful',experiment=experiment)
+                        notification=NotificationModelBuild.objects.create(is_read=False,message='Experiment Successful',experiment=experiment,created_by=experiment.created_by)
                         # Notification.create 
                 # df=self.subset_data()
             super(Classificationmodel, self).save(*args, **kwargs)
 
-class Notification(models.Model):
+class NotificationModelBuildManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_read=False)
+
+class NotificationModelBuild(models.Model):
     is_read = models.BooleanField(default=False)
     message = models.TextField()
     experiment=models.ForeignKey(Experiment, on_delete=models.CASCADE, null=True,blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     # user = models.ForeignKey(User, on_delete=models.CASCADE)
+    objects = NotificationModelBuildManager()
+    created_by = models.ForeignKey(User,null=True, blank=True, on_delete=models.CASCADE)
 
 
 import django_filters
@@ -405,9 +411,19 @@ class ExperimentFilter(django_filters.FilterSet):
     experiment_status = django_filters.ChoiceFilter(choices=Experiment.STATUS_TYPE,widget=django_filters.widgets.LinkWidget)
     experiment_type = django_filters.ChoiceFilter(choices=Experiment.EXPERIMENT_TYPE,widget=django_filters.widgets.LinkWidget)
     # created_on_date= django_filters.DateFromToRangeFilter(widget=django_filters.widgets.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}))
+
+    #     start = django_filters.DateFilter(
+    #     field_name='trademonthlystat__last_date', 
+    #     lookup_expr='gt',         
+    # )
+    
+    # end = django_filters.DateFilter(
+    #     field_name='trademonthlystat__last_date', 
+    #     lookup_expr='lt',        
+    # )
     # experiment_status = django_filters.CharFilter(lookup_expr='iexact')
-    # release_year__gt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__gt')
-    # release_year__lt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__lt')
+    created_on_date__gt = django_filters.NumberFilter(field_name='created_on_date', lookup_expr='year__gt',label="Start")
+    created_on_date__lt = django_filters.NumberFilter(field_name='created_on_date', lookup_expr='year__lt', label='End')
 
     class Meta:
         model = Experiment

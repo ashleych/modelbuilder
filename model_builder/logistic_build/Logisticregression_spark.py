@@ -470,9 +470,9 @@ def evaluation_metrics_mllib(model,training,test):
 # %%
 
 # %%
-# import pandas as pd
-# filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
-# pd.read_csv(filepath,nrows=50000).to_csv('subset_merged.csv')
+import pandas as pd
+filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
+pd.read_csv(filepath,nrows=10000).to_csv('subset_merged.csv')
 
 # %%
 

@@ -23,7 +23,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse,reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,Notification
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,NotificationModelBuild
 from .forms import ClassificationmodelForm, ExperimentForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
 from .Logisticregression_spark import plot_roc,plot_precision_recall
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -136,7 +136,20 @@ class ExperimentDetailView(ExperimentBaseView, DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
-
+    model=Experiment
+    # from django.http import Http404
+    # https://stackoverflow.com/questions/6456586/redirect-from-generic-view-detailview-in-django
+    # def get(self, request, *args, **kwargs):
+    #     try:
+    #         pass
+    #         # self.object = self.get_object()
+    #         experiment=self.get_object()
+    #         experiment.experiment_type
+    #         self.object = self.get_object()
+    #     except Http404:
+    #         pass
+            # redirect here
+            # return redirect(url)
 # class ExperimentCreateView(ExperimentBaseView, CreateView):
 #     """View to create a new film"""
 
@@ -397,7 +410,7 @@ class ResultsClassificationmodelDetailView(LoginRequiredMixin,ResultsClassificat
 
         context['train_res_pr']=get_precision_recall_plot(res,type='train')
         context['test_res_pr']=get_precision_recall_plot(res,type='test')
-        unread_notifications = Notification.objects.filter(is_read=False).count()
+        unread_notifications = NotificationModelBuild.objects.filter(is_read=False).count()
         context["unread_notifications"] = unread_notifications
         return context
 
@@ -458,3 +471,22 @@ def register_user(request):
 
     return render(request, "accounts/register.html", {"form": form, "msg" : msg, "success" : success })
 
+
+
+class NotificationModelBuildBaseView(View):
+    model = NotificationModelBuild
+    paginate_by = 10
+    fields = '__all__'
+    success_url = reverse_lazy('all')
+
+class NotificationModelBuildListView(LoginRequiredMixin,NotificationModelBuildBaseView, ListView):
+    """View to list all films.
+    Use the 'film_list' variable in the template
+    to access all NotificationModelBuild objects"""
+    # Songs.objects.filter(genre__genre='Jazz')
+
+class NotificationModelBuildUpdateView(LoginRequiredMixin,NotificationModelBuildBaseView, UpdateView):
+    """View to update a film"""
+
+class NotificationModelBuildDeleteView(LoginRequiredMixin,NotificationModelBuildBaseView, DeleteView):
+    """View to delete a film"""

@@ -48,4 +48,8 @@ urlpatterns = [
     path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
     # path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
     path('register/', views.register_user,name='register'),
+
+    path('notificationmodelbuild', views.NotificationModelBuildListView.as_view(), name='notificationmodelbuild'),
+    path('notificationmodelbuild/<int:pk>/update/', views.NotificationModelBuildUpdateView.as_view(), name='notificationmodelbuild_update'),
+    path('notificationmodelbuild/<int:pk>/delete/', views.NotificationModelBuildDeleteView.as_view(), name='notificationmodelbuild_delete'),
 ]
