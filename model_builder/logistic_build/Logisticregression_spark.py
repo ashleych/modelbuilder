@@ -17,7 +17,9 @@ import scorecardpy as sc
 from sklearn.metrics import auc, roc_curve
 from matplotlib import pyplot as plt 
 import plotly.express as px
+from pathlib import Path
 
+from django.conf import settings
 def plot_roc(fpr,tpr,auc):
   fig = px.area(
       x=fpr, y=tpr,
@@ -70,59 +72,42 @@ class ClassificationMetrics():
       
     @property
     def FPR(self):
-        print("fpr getter method called")
         return json.loads(self._FPR)
       
     # a setter function
     @FPR.setter
     def FPR(self, a):
-        # if(a < 18):
-        #   raise ValueError("Sorry you age is below eligibility criteria")
-        print("FPR setter method called")
         self._FPR = json.dumps(list(a))
 
     @property
     def TPR(self):
-        print("tpr getter method called")
         return json.loads(self._TPR)
       
     # a setter function
     @TPR.setter
     def TPR(self, a):
-        # if(a < 18):
-        #   raise ValueError("Sorry you age is below eligibility criteria")
-        print("TPR setter method called")
         self._TPR = json.dumps(list(a))
 
     @property
     def precision(self):
-        print("precision getter method called")
         return json.loads(self._precision)
       
     # a setter function
     @precision.setter
     def precision(self, a):
-        # if(a < 18):
-        #   raise ValueError("Sorry you age is below eligibility criteria")
-        print("TPR setter method called")
         self._precision = json.dumps(list(a))
     @property
     def recall(self):
-        print("recall getter method called")
         return json.loads(self._recall)
       
     # a setter function
     @recall.setter
     def recall(self, a):
-        # if(a < 18):
-        #   raise ValueError("Sorry you age is below eligibility criteria")
-        print("recall setter method called")
         self._recall = json.dumps(list(a))
       
     @property
     def all_attributes(self):
         all_attrib=dict(vars(self), FPR=self.FPR,TPR=self.TPR,precision=self.precision,recall=self.recall)
-        # all_attrib.pop('_FPR', 'No Key found')
         keys= list(all_attrib.keys()) 
         for key in keys:
           if key.startswith("_"): #remove all private keys
@@ -210,7 +195,12 @@ class LogisticRegressionModel_spark():
       df = self.spark.read.option("header",True).csv(filepath, inferSchema=inferSchema)
       # print(df.columns)
     else:
-      RuntimeError(f"Path {filepath} not found")
+      abs_file_path=os.path.join(Path(settings.BASE_DIR).parent,filepath)
+      print(abs_file_path)
+      if os.path.exists(abs_file_path):
+        df = self.spark.read.option("header",True).csv(abs_file_path, inferSchema=inferSchema)
+      else:
+        RuntimeError(f"Path {filepath} not found")
     return df
 
   def remove_cols(self, remove_cols_list):

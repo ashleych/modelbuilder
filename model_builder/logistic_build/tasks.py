@@ -8,6 +8,7 @@ from model_builder.celery import app
 import logistic_build.models as m
 from pathlib import Path
 import os
+from django.utils import timezone
 
 from .Logisticregression_spark import LogisticRegressionModel_spark,evaluation_metrics_mllib
 
@@ -45,7 +46,7 @@ def do_stationarity_test_django_q(experiment_id):
         experiment.run_now=False
         experiment.save()
     
-def run_logistic_regression(experiment_id):
+def run_logistic_regression(experiment_id,run_in_the_background=False):
 
         experiment = m.Classificationmodel.objects.get(experiment_id=experiment_id)
         print(settings.BASE_DIR)
@@ -55,8 +56,24 @@ def run_logistic_regression(experiment_id):
             file_path=os.path.join(Path(settings.BASE_DIR).parent,experiment.traindata.train_path)
             if not os.path.exists(file_path):
                 ValueError("Input file doesnt exist")
-        log_regression_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, label_col=experiment.label_col ) 
-        return log_regression_results
+        logistic_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, label_col=experiment.label_col ) 
+        if run_in_the_background:
+            print('inside the run in bck')
+            train_results=m.ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
+            test_results=m.ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
+
+            experiment.results=m.ResultsClassificationmodel.objects.create(train_results=train_results,test_results=test_results,
+                        coefficients=json.dumps(logistic_results.overall_result.coefficients),
+                        feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
+            experiment.experiment_status='DONE'
+            experiment.run_end_time= timezone.now()
+            experiment.run_now=False
+            experiment.save()
+            # super(m.Classificationmodel, self).save(*args, **kwargs)
+            experiment=m.Experiment.objects.get(experiment_id=experiment_id)
+            notification=m.NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
+            return 
+        return logistic_results
 # from celery import shared_task
 
 # MYGLOBAL = 0

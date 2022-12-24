@@ -33,7 +33,7 @@ class StationarityForm(forms.ModelForm):
     class Meta:
         model = Stationarity
         fields = '__all__'
-        fields= [ "name", "traindata", "do_kpss", "do_adf", "significance" ,"do_create_data", "previous_experiment",'run_now']
+        fields= [ "name", "traindata", "do_kpss", "do_adf", "significance" ,"do_create_data", "previous_experiment",'run_now','run_in_the_background']
 
 
     def clean(self):
@@ -55,7 +55,7 @@ class ClassificationmodelForm(forms.ModelForm):
     class Meta:
         model = Classificationmodel
         fields = '__all__'
-        fields= [ "name", "traindata","do_create_data", "previous_experiment",'run_now',"label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation"]
+        fields= [ "name", "traindata","do_create_data", "previous_experiment",'run_now',"run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation"]
 
     def clean(self):
         cleaned_data = super().clean()

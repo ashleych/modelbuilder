@@ -83,7 +83,7 @@ class Experiment(models.Model):
         ('manualvariableselection','Manual variable selection'),
         ('classificationmodel','Build logistic regression model')
     ]
-    STATUS_TYPE= [("STARTED","STARTED"),("IN_PROGRESS","IN PROGRESS"),("DONE","DONE"),("ERROR","ERROR")]
+    STATUS_TYPE= [("NOT_STARTED","NOT STARTED"),("STARTED","STARTED"),("IN_PROGRESS","IN PROGRESS"),("DONE","DONE"),("ERROR","ERROR")]
     experiment_id= models.AutoField(primary_key=True)
     experiment_type=models.CharField(max_length=100,choices=EXPERIMENT_TYPE,null=True, blank=True,default="input")
     name = models.CharField(max_length=100,null=True, blank=True)
@@ -93,10 +93,12 @@ class Experiment(models.Model):
     experiment_status=models.CharField(max_length=20,choices=STATUS_TYPE,null=True, blank=True)
     traindata = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True,blank=True, related_name ='input_train_data')
     do_create_data =models.BooleanField(default=True)
+    run_in_the_background= models.BooleanField(default=True)
     enable_spark=models.BooleanField(default=True)
     output_data = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True,blank=True,related_name ='output_data')
     previous_experiment = models.ForeignKey('self',null=True,blank=True,on_delete=models.CASCADE)
     run_now=models.BooleanField(default=False)
+    lock_now=models.BooleanField(default=False)
     run_start_time= models.DateTimeField( null=True, blank=True)
     run_end_time= models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(User,
@@ -347,48 +349,44 @@ class Classificationmodel(Experiment):
             return reverse('classificationmodel_update', args=[str(self.experiment_id)])
     
     def save(self, *args, **kwargs):
+            # super(Classificationmodel, self).save(*args, **kwargs)
             # self.slug = slugify(self.title)
+            print(f"self run now : {self.run_now}")
             if self._state.adding: 
                 self.experiment_type='classificationmodel'
-                # if self.previous_experiment and self.previous_experiment.output_data:
-                #     self.traindata=self.previous_experiment.output_data
-                #     self.input_columns=json.dumps(pd.read_csv(self.traindata.train_path,nrows=10).columns.to_list())
+                self.experiment_status= 'NOT STARTED'
+                super(Classificationmodel, self).save(*args, **kwargs)
 
-                #     if  self.run_now:
-                #         self.run_start_time= timezone.now()
-                #         self.create_output_data()
-                #         self.run_end_time= timezone.now()
             else:
                 if  self.run_now:
+                        self.run_end_time=None
                         self.run_start_time= timezone.now()
                         # self.create_output_data()
                         # from .tasks import run_logistic_regression # this is done to avoid 
                         import logistic_build.tasks as t
                         self.experiment_status='STARTED'
                         super(Classificationmodel, self).save(*args, **kwargs)
-                        # async_task("logistic_build.tasks.do_stationarity_test_django_q", self.experiment_id)
-                        logistic_results= t.run_logistic_regression(self.experiment_id)
-                        train_results=ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
-                        test_results=ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
+                        if self.run_in_the_background:
+                            async_task("logistic_build.tasks.run_logistic_regression", self.experiment_id,run_in_the_background=True)
+                            # logistic_results= t.run_logistic_regression(self.experiment_id,run_in_the_background=True) # to run in foreground, for checks
+                        else:
+                            logistic_results= t.run_logistic_regression(self.experiment_id)
+                            train_results=ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
+                            test_results=ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
 
-                        self.results=ResultsClassificationmodel.objects.create(train_results=train_results,test_results=test_results,
-                                    coefficients=json.dumps(logistic_results.overall_result.coefficients),
-                                    feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
-                        
-            # if self.experiment_status and self.experiment_status=='DONE':
-            #     self.create_variables_with_stationarity_results()
-            #     if self.do_create_data:
-            #         self.create_output_data()
-
-                    
-                        self.experiment_status='DONE'
-                        self.run_end_time= timezone.now()
+                            self.results=ResultsClassificationmodel.objects.create(train_results=train_results,test_results=test_results,
+                                        coefficients=json.dumps(logistic_results.overall_result.coefficients),
+                                        feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
+                            self.experiment_status='DONE'
+                            self.run_end_time= timezone.now()
+                            super(Classificationmodel, self).save(*args, **kwargs)
+                            experiment=Experiment.objects.get(pk=self.experiment_id)
+                            notification=NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
+                            # print(kwargs)
+                else:
+                    print("Experiment status :",self.experiment_status)
+                    if self.experiment_status=='DONE':
                         super(Classificationmodel, self).save(*args, **kwargs)
-                        experiment=Experiment.objects.get(pk=self.experiment_id)
-                        notification=NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
-                        # Notification.create 
-                # df=self.subset_data()
-            super(Classificationmodel, self).save(*args, **kwargs)
 
 class NotificationModelBuildManager(models.Manager):
     def get_queryset(self):
@@ -409,6 +407,7 @@ class NotificationModelBuild(models.Model):
 import django_filters
 
 class ExperimentFilter(django_filters.FilterSet):
+    # This is used to power the filters to the right of the all_experiments view
     name = django_filters.CharFilter(lookup_expr='iexact')
     experiment_status = django_filters.ChoiceFilter(choices=Experiment.STATUS_TYPE,widget=django_filters.widgets.LinkWidget)
     experiment_type = django_filters.ChoiceFilter(choices=Experiment.EXPERIMENT_TYPE,widget=django_filters.widgets.LinkWidget)
@@ -430,8 +429,3 @@ class ExperimentFilter(django_filters.FilterSet):
     class Meta:
         model = Experiment
         fields = ['experiment_type', 'name','experiment_status']
-        # fields = {
-        #     'experiment_type': [ 'contains'],
-        #     'name': ['contains'],
-        #     'created_on_date': ['exact', 'year__gt'],
-        # }
