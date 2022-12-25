@@ -12,7 +12,8 @@
                 {{form.as_table}}
             </table>
             <div class="container d-flex justify-content-center" style="width: 10%;">
-                <input type="submit" class="btn btn-primary btn-lg" value="Submit" style="margin-right: 30px; margin-top: 30px;">
+                <input type="submit" class="btn btn-primary btn-lg" value="SUBMIT" name="_run_now" style="margin-right: 30px; margin-top: 30px;">
+                <input type="submit" class="btn btn-primary btn-lg" value="SAVE AS DRAFT" name="_draft" style="margin-right: 30px; margin-top: 30px;">
                 <input type="submit" class="btn btn-danger btn-lg" style="margin-top: 30px;" onclick="window.location='{% url "all" %}'; return false;" value="Cancel">
             </div>    
         </form> 

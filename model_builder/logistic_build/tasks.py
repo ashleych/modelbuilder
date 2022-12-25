@@ -44,8 +44,12 @@ def do_stationarity_test_django_q(experiment_id):
         if experiment.do_create_data:
             experiment.create_output_data(file_path=file_path)
         experiment.run_now=False
+        experiment.experiment_status='DONE'
+        experiment.run_end_time= timezone.now()
         experiment.save()
-    
+        notification=m.NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Stationarity Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
+        return 
+        
 def run_logistic_regression(experiment_id,run_in_the_background=False):
 
         experiment = m.Classificationmodel.objects.get(experiment_id=experiment_id)
@@ -56,8 +60,24 @@ def run_logistic_regression(experiment_id,run_in_the_background=False):
             file_path=os.path.join(Path(settings.BASE_DIR).parent,experiment.traindata.train_path)
             if not os.path.exists(file_path):
                 ValueError("Input file doesnt exist")
+        print(experiment.traindata.train_path)
+        print(experiment.label_col)
         logistic_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, label_col=experiment.label_col ) 
-        if run_in_the_background:
+        if True:
+        # if run_in_the_background:
+                            #             logistic_results= t.run_logistic_regression(self.experiment_id)
+                            # train_results=ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
+                            # test_results=ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
+
+                            # self.results=ResultsClassificationmodel.objects.create(train_results=train_results,test_results=test_results,
+                            #             coefficients=json.dumps(logistic_results.overall_result.coefficients),
+                            #             feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
+                            # self.experiment_status='DONE'
+                            # self.run_end_time= timezone.now()
+                            # super(Classificationmodel, self).save(*args, **kwargs)
+                            # experiment=Experiment.objects.get(pk=self.experiment_id)
+                            # notification=NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
+
             print('inside the run in bck')
             train_results=m.ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
             test_results=m.ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)

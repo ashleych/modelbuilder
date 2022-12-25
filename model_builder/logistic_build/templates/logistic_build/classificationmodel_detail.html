@@ -14,14 +14,20 @@
                     </tr>
                 </thead>
                 <tbody>
-
                     {% for label, value in classificationmodel.get_fields  %}
-                    {% if not label == "colnames" %}
-                        <tr>
-                            <td>{{label | upper}}</td>
-                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
-                        </tr>
-                    {% endif %}
+                        {% if not label == "results" %}
+                            <tr>
+                                <td>{{label | upper}}</td>
+                                <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td>{{label | upper}}</td>
+                                
+                                <td style="word-break:break-all;style="width: 50%"">{% if value %}
+                                    <a href="{% url 'resultsclassificationmodel_detail' value %}" class=""> {% endif %}{{value}}</a></td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                         
                 </tbody>

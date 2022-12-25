@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     # 'django_celery_results',
     'debug_toolbar',
     'django_q',
+    # 'view_breadcrumbs',
+    # 'dynamic_breadcrumbs'
     'logistic_build',
     'django_filters'
 ]
@@ -54,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'model_builder.urls'
@@ -70,6 +73,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'logistic_build.context_processors.cfg_assets_root',
+                
             ],
         },
     },
@@ -163,3 +167,48 @@ LOGIN_REDIRECT_URL = 'experiment_all'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 INTERNAL_IPS=['127.0.0.1']
+# EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+
+# Bottom of settings.py 
+# Twilio SendGrid
+# EMAIL_HOST = 'smtp.sendgrid.net'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'apikey' # Name for all the SenGrid accounts
+# EMAIL_HOST_PASSWORD = config('SENDGRID_API_KEY')
+# SENDGRID_SANDBOX_MODE_IN_DEBUG =False
+# SENDGRID_API_KEY=config('SENDGRID_API_KEY')
+
+ANYMAIL = {"MAILGUN_API_KEY": "d50d2879271236521803ff3a34796f65-eb38c18d-b95c3514",
+"MAILGUN_SENDER_DOMAIN": "sandbox0cdfca8a97eb49fab008d9179dcff9c7.mailgun.org",
+}
+
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = "postmaster@sandbox0cdfca8a97eb49fab008d9179dcff9c7.mailgun.org"
+# The email you'll be sending emails from
+# DEFAULT_FROM_EMAIL = config('FROM_EMAIL', default='ashley.cherian@gmail.com')
+LOGIN_REDIRECT_URL = 'success'
+
+
+# ANYMAIL = {
+# "MAILGUN_API_KEY": "d50d2879271236521803ff3a34796f65-eb38c18d-b95c3514",
+# "MAILGUN_SENDER_DOMAIN": "sandbox0cdfca8a97eb49fab008d9179dcff9c7.mailgun.org",
+# }
+# EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+# DEFAULT_FROM_EMAIL = "postmaster@sandbox0cdfca8a97eb49fab008d9179dcff9c7.mailgun.org"
+
+# def send_simple_message():
+# 	return requests.post(
+# 		f"https://api.mailgun.net/v3/{ANYMAIL['MAILGUN_SENDER_DOMAIN']}/messages",
+# 		auth=("api", ANYMAIL['MAILGUN_API_KEY']),
+# 		data={"from": f"Ashley C <{DEFAULT_FROM_EMAIL}>",
+# 			"to": ["ashley.cherian@aptivaa.com"],
+# 			"subject": "Hello New testing",
+# 			"text": "helo, Testing some Mailgun awesomness!"})
+
+# https://medium.com/@9cv9official/sending-html-email-in-django-with-anymail-7163dc332113
+#  set up any mail with mailgun account
+# for free tier access,need to verify recipient account 
+
+
+BREADCRUMBS_HOME_LABEL = "My new home"

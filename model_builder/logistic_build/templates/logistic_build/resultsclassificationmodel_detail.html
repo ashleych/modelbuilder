@@ -16,7 +16,7 @@
 
         </div>
         <div>
-
+            {% if test_res_roc %}
             <div>
                 {{ test_res_roc.rocPlot | safe}}
                 {{ test_res_roc.auc | safe}}
@@ -25,6 +25,12 @@
                 {{ test_res_pr.prPlot | safe}}
                 {{ test_res_pr.pr | safe}}
             </div>
+            {% else %}
+            <div>
+                <p> No ROC details for test data available, this is likely to happen if there are no bads in the test data</p>
+            </div>
+            {% endif %}
+
         </div>
         <div>
             {{ train_res_roc.rocPlot | safe}}

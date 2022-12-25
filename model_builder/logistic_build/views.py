@@ -27,6 +27,8 @@ from .models import Traindata,Variables,Experiment,Stationarity,Manualvariablese
 from .forms import ClassificationmodelForm, ExperimentForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
 from .Logisticregression_spark import plot_roc,plot_precision_recall
 from django.contrib.auth.mixins import LoginRequiredMixin
+# from view_breadcrumbs import ListBreadcrumbMixin,DetailBreadcrumbMixin
+
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
     # return render(request, 'logistic_build/index.html')
@@ -74,12 +76,19 @@ import json
 class TraindataBaseView(LoginRequiredMixin,View):
     model = Traindata
     fields = '__all__'
-    success_url = reverse_lazy('all')
+    success_url = reverse_lazy('traindata_list')
+
+from django.utils.functional import cached_property
 
 class TraindataListView(TraindataBaseView, ListView):
     """View to list all films.
     Use the 'film_list' variable in the template
     to access all Traindata objects"""
+    template_name = 'logistic_build/traindata_list.html'
+
+    @cached_property
+    def crumbs(self):
+        return [("My Test Breadcrumb", reverse("all"))]
 
 class TraindataDetailView(TraindataBaseView, DetailView):
     """View to list the details from one film.
@@ -211,6 +220,12 @@ class StationarityUpdateView( UpdateView):
     def get_form_kwargs(self):
         kwargs = super(StationarityUpdateView, self).get_form_kwargs()
         return kwargs
+
+    def form_valid(self, form):
+        if '_run_now' in form.data:
+            form.instance.run_now=True   #     this is done so that,when user clicks 'save as draft' then run_now is kept as false
+        form.instance.experiment_status='NOT_STARTED'
+        return super().form_valid(form)
 class StationarityDeleteView(StationarityBaseView, DeleteView):
     """View to delete a film"""
 
@@ -336,7 +351,23 @@ class ClassificationmodelUpdateView(LoginRequiredMixin,UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(ClassificationmodelUpdateView, self).get_form_kwargs()
+        # if 'data' in kwargs: #or check if self.request.method = POST
+        #     if '_run_now' in kwargs['data']:
+        #         kwargs['run_now']=['on']
         return kwargs
+    def form_valid(self, form):
+        # This method is called when valid form data has been POSTed.
+        # It should return an HttpResponse.
+        # form.send_email()
+        if '_run_now' in form.data:
+            form.instance.run_now=True   #     this is done so that,when user clicks 'save as draft' then run_now is kept as false
+        form.instance.experiment_status='NOT_STARTED'
+        return super().form_valid(form)
+    
+    # def get_success_url(self):
+    #     a=1
+    #     return a
+
 class ClassificationmodelDeleteView(LoginRequiredMixin,ClassificationmodelBaseView, DeleteView):
     """View to delete a film"""
     template_name='logistic_build/experiment_confirm_delete.html'
@@ -409,10 +440,15 @@ class ResultsClassificationmodelDetailView(LoginRequiredMixin,ResultsClassificat
 
 
         context['train_res_roc']=get_fpr_tpr(res,type='train')
-        context['test_res_roc']=get_fpr_tpr(res,type='test')
 
         context['train_res_pr']=get_precision_recall_plot(res,type='train')
-        context['test_res_pr']=get_precision_recall_plot(res,type='test')
+        if res.test_results.areaUnderROC:
+            context['test_res_roc']=get_fpr_tpr(res,type='test')
+            context['test_res_pr']=get_precision_recall_plot(res,type='test')
+        else:
+            context['test_res_roc']=None
+            context['test_res_pr']=None
+        
         unread_notifications = NotificationModelBuild.objects.filter(is_read=False).count()
         context["unread_notifications"] = unread_notifications
         return context

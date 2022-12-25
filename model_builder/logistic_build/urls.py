@@ -3,10 +3,11 @@ from django_filters.views import FilterView
 from . import views
 from .models import ExperimentFilter
 
+# app_name="logistic_build"
 urlpatterns = [
     path('', views.index, name='index'),
     path('upload/csv', views.upload_csv, name='upload_csv'),
-    path('traindata', views.TraindataListView.as_view(), name='all'),
+    path('traindata', views.TraindataListView.as_view(), name='traindata_list'),
     path('traindata/<int:pk>/detail', views.TraindataDetailView.as_view(), name='traindata_detail'),
     path('traindata/create/', views.TraindataCreateView.as_view(), name='traindata_create'),
     path('traindata/<int:pk>/update/', views.TraindataUpdateView.as_view(), name='traindata_update'),

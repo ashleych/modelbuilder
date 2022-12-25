@@ -29,4 +29,5 @@ admin.site.site_title = 'Model builder site admin' # default: "Django site admin
 urlpatterns += [
     path('accounts/', include('django.contrib.auth.urls')),
     path('__debug__/', include('debug_toolbar.urls')),
+    # path('logistic_build/', include('logistic_build.urls',namespace='logistic_build')),
 ]

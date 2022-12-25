@@ -64,11 +64,12 @@ import json
 @auto_str
 class ClassificationMetrics():
 # https://www.kaggle.com/code/solaznog/mllib-spark-and-pyspark
-    def __init__(self) -> None:
+    def __init__(self, type) -> None:
         self._FPR=None
         self._TPR=None
         self._precision=None
         self._recall=None
+        self.type=type
       
     @property
     def FPR(self):
@@ -138,8 +139,8 @@ class LogisticRegressionModel_spark():
                ):
     
     self.spark  = self.get_spark_session()
-    self.train_result = ClassificationMetrics() #initialise this 
-    self.test_result = ClassificationMetrics() #initialise this 
+    self.train_result = ClassificationMetrics(type='train') #initialise this 
+    self.test_result = ClassificationMetrics(type='test') #initialise this 
     self.overall_result = OverallClassificationResults() #initialise this 
     self.df = self.read_csv_data(filepath,inferSchema=inferSchema)
     self.columns = self.df.columns
@@ -157,6 +158,8 @@ class LogisticRegressionModel_spark():
     if normalise:
       self.add_normaliser(label_col)
     self.train, self.test = self.train_test_split(train_percent, test_percent, seed)
+    print("self.train.count " + str(self.train.count()))
+    print("self.test.count " + str(self.test.count()))
     # self.
     self.build_pipeline()
     self.transform_data()

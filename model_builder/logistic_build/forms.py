@@ -33,7 +33,7 @@ class StationarityForm(forms.ModelForm):
     class Meta:
         model = Stationarity
         fields = '__all__'
-        fields= [ "name", "traindata", "do_kpss", "do_adf", "significance" ,"do_create_data", "previous_experiment",'run_now','run_in_the_background']
+        fields= [ "name", "traindata", "do_kpss", "do_adf", "significance" ,"do_create_data", "previous_experiment",'run_in_the_background']
 
 
     def clean(self):
@@ -44,7 +44,7 @@ class ManualvariableselectionForm(forms.ModelForm):
     class Meta:
         model = Manualvariableselection
         fields = '__all__'
-        fields= [ "name", "traindata","keep_columns","do_create_data", "previous_experiment",'run_now']
+        fields= [ "name", "traindata","keep_columns","do_create_data", "previous_experiment"]
 
 
     def clean(self):
@@ -55,10 +55,18 @@ class ClassificationmodelForm(forms.ModelForm):
     class Meta:
         model = Classificationmodel
         fields = '__all__'
-        fields= [ "name", "traindata","do_create_data", "previous_experiment",'run_now',"run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation"]
-
+        fields= [ "name", "traindata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","experiment_status"]
+        widgets = {'experiment_status': forms.HiddenInput()}
     def clean(self):
+        # form.cleaned_data['extra']
         cleaned_data = super().clean()
+        return cleaned_data
+        
+
+    # def form_valid(self, form, *args, **kwargs):
+    #     # user = form.cleaned_data.get('user')
+    #     # self.log_id = User.objects.get(username=user).select_related('log').last().id
+    #     return super().form_valid(form, *args, **kwargs) 
 
 
 
