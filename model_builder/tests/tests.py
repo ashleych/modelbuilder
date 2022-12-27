@@ -98,6 +98,8 @@ def test_creating_customer( notificationmodelbuild):
     t=Traindata.objects.create(train_path='input/input_IRPqAaa.csv',train_data_name='new')
     t=Traindata.objects.get(train_path='input/input_IRPqAaa.csv')
     c=Classificationmodel.objects.create(traindata=t,name='new',experiment_type='stationarity',label_col='def_trig',run_now=True,run_in_the_background=False)
+    c.run_now = True
+    c.save()
     # assert isinstance( notificationmodelbuild, NotificationModelBuild)
     print(c)
     assert isinstance( c, Classificationmodel)
