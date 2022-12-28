@@ -5,7 +5,7 @@
 
 <head>
     <title>
-        Model Builder- {% block title %}{% endblock %} | AppSeed
+        Model Builder- {% block title %}{% endblock %} | Cognext
     </title>
     <!-- HTML5 Shim and Respond.js IE11 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="{% static 'logistic_build/assets/plugins/animation/css/animate.min.css' %}">
     <!-- vendor css -->
     <link rel="stylesheet" href="{% static 'logistic_build/assets/css/logistic_style.css' %}" >
+    <link rel="stylesheet" href="{% static 'logistic_build/assets/css/previous_experiments_styles.css' %}" >
     <link rel="stylesheet" href="{% static 'logistic_build/assets/css/style.css' %}" >
     <link rel="stylesheet" href="{% static 'logistic_build/custom.css' %}" >
     <!-- dark mode css -->
@@ -42,6 +43,7 @@
 
 </head>
 <body>
+    <!--Source is  https://django-datta-able.appseed-srv1.com/ -->
     <!-- {% block file_input %}{% endblock %}  -->
     <!-- [ Pre-loader ] start -->
     <div class="loader-bg">
@@ -54,6 +56,8 @@
     {% include 'logistic_build/includes/sidebar.html' %}
     
     {% include 'logistic_build/includes/navigation.html' %}
+
+    
     {% block content %}{% endblock content %}
     
 
@@ -63,6 +67,12 @@
 
     <!-- Specific Page JS goes HERE  -->
     {% block javascripts %}{% endblock javascripts %}
-
+    <!-- The svg here is used as a tick mark in the experiment_details page,its put here so that it doesnt take up space in the main page -->
+    <!-- In the code, it is cloned using <use> tags and reused -->
+<svg xmlns="http://www.w3.org/2000/svg">
+    <symbol id="checkmark-bold" viewBox="0 0 24 24">
+      <path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/>
+    </symbol>
+</svg>
 </body>
 </html>

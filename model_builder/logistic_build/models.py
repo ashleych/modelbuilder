@@ -86,7 +86,7 @@ class Experiment(models.Model):
     STATUS_TYPE= [("NOT_STARTED","NOT STARTED"),("STARTED","STARTED"),("IN_PROGRESS","IN PROGRESS"),("DONE","DONE"),("ERROR","ERROR")]
     experiment_id= models.AutoField(primary_key=True)
     experiment_type=models.CharField(max_length=100,choices=EXPERIMENT_TYPE,null=True, blank=True,default="input")
-    name = models.CharField(max_length=100,null=True, blank=True)
+    name = models.CharField(max_length=100)
     artefacts_directory = models.CharField(max_length=100,null=True, blank=True)
     # start_date = models.DateField(null=True, blank=True)
     created_on_date= models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -108,11 +108,13 @@ class Experiment(models.Model):
     def _track_precedents(self):
         if self.previous_experiment:
             if self.previous_experiment.all_preceding_experiments:
-                prev_exp_dict=json.loads(self.all_preceding_experiments)
-                prev_exp_dict[self.experiment_id]= f"{self.experiment_type}:{self.exeriment_name}"
+                prev_exp_dict=json.loads(self.previous_experiment.all_preceding_experiments)
+                prev_exp_dict.append((self.previous_experiment.experiment_id,self.previous_experiment.experiment_type,self.previous_experiment.name))
+                # prev_exp_dict[self.experiment_id]= f"{self.experiment_type}:{self.exeriment_name}"
+                self.all_preceding_experiments = json.dumps(prev_exp_dict)
             else:
-                prev_exp_dict={self.previous_experiment.experiment_id : f"{self.previous_experiment.experiment_type}:{self.previous_experiment.name}" }
-            self.all_preceding_experiments = json.dumps(prev_exp_dict)
+                prev_exp_dict=[(self.previous_experiment.experiment_id , self.previous_experiment.experiment_type,self.previous_experiment.name )]
+                self.all_preceding_experiments = json.dumps(prev_exp_dict)
    
     def __str__(self):
         return self.name if self.name else ''
@@ -121,11 +123,15 @@ class Experiment(models.Model):
         return [(field.verbose_name, field.value_from_object(self)) for field in self.__class__._meta.fields[1:]] 
         
     def get_absolute_url(self):
-        return reverse('experiment_detail', args=[str(self.experiment_id)])
+        if self.experiment_type!='input':
+            return reverse(f'{self.experiment_type}_detail', args=[str(self.experiment_id)])
+        else:
+            return reverse(f'experiment_detail', args=[str(self.experiment_id)])
 
     def save(self, *args, **kwargs):
             self._track_precedents()
             super(Experiment, self).save(*args, **kwargs)
+            # super(Experiment, self).save(*args, **kwargs)
             if not self.artefacts_directory:
                 self.artefacts_directory =os.path.join("artefacts","experiment_"+str(self.experiment_id)+"_"+self.name)
                 os.makedirs(self.artefacts_directory,exist_ok=True)
@@ -234,7 +240,7 @@ class Stationarity(Experiment):
                 if self.run_in_the_background:
                     async_task("logistic_build.tasks.do_stationarity_test_django_q", self.experiment_id)
                 else:
-                    result=t.do_stationarity_test_django_q(self.experiment_id,run_in_the_background=False)
+                    result=t.do_stationarity_test_django_q(self.experiment_id)
             else:
                 if self.experiment_status=='DONE' or self.experiment_status=='NOT_STARTED':
                             super(Stationarity, self).save(*args, **kwargs)

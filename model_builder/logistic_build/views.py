@@ -21,6 +21,7 @@ from django.template.response import TemplateResponse
 from django.views import View
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
+from django.views.generic import RedirectView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse,reverse_lazy
 from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,NotificationModelBuild
@@ -144,26 +145,26 @@ class ExperimentListView(ExperimentBaseView, ListView):
         queryset =Experiment.objects.exclude(experiment_type='Input')
         return queryset
 
-class ExperimentDetailView(ExperimentBaseView, DetailView):
+class ExperimentDetailView(ExperimentBaseView, RedirectView,DetailView):
     """View to list the details from one film.
     Use the 'film' variable in the template to access
     the specific film here and in the Views below"""
     model=Experiment
+    
+
+    def get_redirect_url(self, *args, **kwargs):
+        type=Experiment.objects.get(pk=kwargs['pk']).experiment_type
+        return reverse(f'{type}_detail',kwargs={"pk": kwargs['pk']})
+        # return reverse(f'{')
+        user_role = Profile.objects.get(user=self.request.user).role
+        if user_role in internal_users:
+            return reverse('home')
+        else:
+            return reverse('event_list')
     # from django.http import Http404
     # https://stackoverflow.com/questions/6456586/redirect-from-generic-view-detailview-in-django
     # def get(self, request, *args, **kwargs):
-    #     try:
-    #         pass
-    #         # self.object = self.get_object()
-    #         experiment=self.get_object()
-    #         experiment.experiment_type
-    #         self.object = self.get_object()
-    #     except Http404:
-    #         pass
-            # redirect here
-            # return redirect(url)
-# class ExperimentCreateView(ExperimentBaseView, CreateView):
-#     """View to create a new film"""
+
 
 class ExperimentCreateView(ExperimentBaseView, CreateView):
     """View to create a new film"""
@@ -208,6 +209,11 @@ class StationarityDetailView(StationarityBaseView, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['created_by']=context['stationarity'].created_by.username
+
+        if context['stationarity'].all_preceding_experiments:
+            context['previous_experiments_list']=json.loads(context['stationarity'].all_preceding_experiments)
+            context['current_experiment_list']=tuple([context['stationarity'].experiment_id,context['stationarity'].experiment_type,context['stationarity'].name])
+
         return context
 class StationarityCreateView(StationarityBaseView, CreateView):
     """View to create a new film"""
@@ -280,7 +286,13 @@ class ManualvariableselectionDetailView(LoginRequiredMixin,Manualvariableselecti
     the specific film here and in the Views below"""
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['created_by']=context['manualvariableselection'].created_by.username
+        if context['manualvariableselection'].created_by:
+            context['created_by']=context['manualvariableselection'].created_by.username
+        type='manualvariableselection'
+        if context[type].all_preceding_experiments:
+            context['previous_experiments_list']=json.loads(context[type].all_preceding_experiments)
+            context['current_experiment_list']=tuple([context[type].experiment_id,context[type].experiment_type,context[type].name])
+
         return context
 class ManualvariableselectionCreateView(LoginRequiredMixin,ManualvariableselectionBaseView, CreateView):
     """View to create a new film"""
@@ -330,6 +342,10 @@ class ClassificationmodelDetailView(LoginRequiredMixin,ClassificationmodelBaseVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['created_by']=context['classificationmodel'].created_by.username
+        if context['classificationmodel'].all_preceding_experiments:
+            context['previous_experiments_list']=json.loads(context['classificationmodel'].all_preceding_experiments)
+            context['current_experiment_list']=tuple([context['classificationmodel'].experiment_id,context['classificationmodel'].experiment_type,context['classificationmodel'].name])
+
         return context
 class ClassificationmodelCreateView(LoginRequiredMixin,ClassificationmodelBaseView, CreateView):
     """View to create a new film"""

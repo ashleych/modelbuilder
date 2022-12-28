@@ -1,0 +1,32 @@
+
+{% load static %}
+
+<!-- <div class="progress_box"> -->
+
+{% if previous_experiments_list %}
+<ol class="ProgressBar">
+        {% for prev in previous_experiments_list %}
+  <li class="ProgressBar-step is-complete">
+    <svg class="ProgressBar-icon"><use xlink:href="#checkmark-bold"/></svg>
+    <span class="ProgressBar-stepLabel"><a href="{% url 'experiment_detail' prev.0 %}">{{ prev.2 }}</a></span>
+  </li>
+  
+  {% endfor %}
+  <li class="ProgressBar-step">
+    <svg class="ProgressBar-icon"><use xlink:href="#checkmark-bold"/></svg>
+    <span class="ProgressBar-stepLabel">{{ current_experiment_list.2 }}</span>
+  </li>
+
+</ol>
+<p>
+  <button id="previous">Previous</button>
+  <button id="advance">Advance</button>
+</p>
+{% endif %}
+  
+<!-- <p>
+  Apply .is-current to a list item note the current step in the list.  Apply .is-complete to show the checkmark.  The line will be drawn when two list items marked with either class sit next to each other.
+</p> -->
+<!-- </div> -->
+
+
