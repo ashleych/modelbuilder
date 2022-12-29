@@ -169,9 +169,9 @@ def test_chain_muliple_experiments(client,django_user_model):
 
     c=Classificationmodel.objects.create(traindata=t,name='new',experiment_type='classificationmodel',label_col='def_trig',run_now=True,run_in_the_background=False,created_by=user,previous_experiment=f)
     assert isinstance( c, Classificationmodel)
+    c.run_now = True
+    c.save()
     mvs = baker.make(Manualvariableselection,previous_experiment=c,created_by=user)
-    # c.run_now = True
-    # c.save()
 
     client.login(username=username, password=password)
     url = reverse('classificationmodel_detail', kwargs={'pk': c.experiment_id})
@@ -185,6 +185,29 @@ def test_chain_muliple_experiments(client,django_user_model):
     # assert(response.context_data['classificationmodel'].results_id >0)
     with open("yourhtmlfile_mvs.html", "wb") as file:
         file.write(response.content)
+
+
+
+@pytest.fixture()
+def classificationmodelbuild_save(django_user_model,django_db_blocker):
+    """Fixture for baked Customer model."""
+    t=Traindata.objects.create(train_path='input/input_IRPqAaa.csv',train_data_name='new')
+    # t=Traindata.objects.get(train_path='input/input_IRPqAaa.csv')
+    username = "Siri_2"
+    password = "siri_2"
+    user = django_user_model.objects.create_user(username=username, password=password)
+    with django_db_blocker.unblock():
+        c=Classificationmodel.objects.create(traindata=t,name='new',experiment_type='classificationmodel',label_col='def_trig',run_now=True,run_in_the_background=False,created_by=user)
+        c.run_now = True
+        c.save()
+        pass
+    return c
+
+@pytest.mark.django_db(transaction=True)
+def test_using_classificationmodelbuild( classificationmodelbuild_save):
+    """Test function using fixture of baked model."""
+    a=classificationmodelbuild_save
+    assert isinstance( a, NotificationModelBuild)
 
 import json
 @pytest.mark.django_db()
@@ -201,6 +224,8 @@ def test_regression_spark_model(client,django_user_model):
     s.label_col='Selling_Price'
     s.run_now=True
     s.save()
+    exp_id=s.experiment_id
+    saved_regression=Regressionmodel.objects.get(pk=exp_id)
     assert isinstance( s, Regressionmodel)
 
 def test_regression_spark_function(client,django_user_model):

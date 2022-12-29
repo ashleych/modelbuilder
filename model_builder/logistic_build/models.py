@@ -130,6 +130,7 @@ class Experiment(models.Model):
             return reverse(f'experiment_detail', args=[str(self.experiment_id)])
 
     def save(self, *args, **kwargs):
+            print(kwargs)
             self._track_precedents()
             super(Experiment, self).save(*args, **kwargs)
             # super(Experiment, self).save(*args, **kwargs)
