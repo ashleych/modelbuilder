@@ -49,6 +49,9 @@ urlpatterns = [
     path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
     # path('resultsclassificationmodel/<int:pk>/detail', views.ResultsClassificationmodelDetailView.as_view(), name='resultsclassificationmodel_detail'),
     path('register/', views.register_user,name='register'),
+    path('regressionmodel/<int:pk>/detail', views.RegressionmodelDetailView.as_view(), name='regressionmodel_detail'),
+    path('regressionmodel/create/', views.RegressionmodelCreateView.as_view(), name='regressionmodel_create'),
+    path('regressionmodel/<int:pk>/update/', views.RegressionmodelUpdateView.as_view(), name='regressionmodel_update'),
 
     path('notificationmodelbuild', views.NotificationModelBuildListView.as_view(), name='notificationmodelbuild'),
     path('notificationmodelbuild/<int:pk>/update/', views.NotificationModelBuildUpdateView.as_view(), name='notificationmodelbuild_update'),

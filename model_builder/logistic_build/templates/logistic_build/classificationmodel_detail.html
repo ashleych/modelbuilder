@@ -4,38 +4,6 @@
 <div class="" style="width: 70%;">
     <div class="col">
         
-        <h1 class="text-center">Classification model  Details </h1>
-        {% include 'logistic_build/includes/previous_experiments.html' %}
-        <div class="d-flex justify-content-center">
-            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
-                <thead>
-                    <tr>
-                        <th scope="col"></th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for label, value in classificationmodel.get_fields  %}
-                        {% if not label == "results" %}
-                            <tr>
-                                <td>{{label | upper}}</td>
-                                <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td>{{label | upper}}</td>
-                                
-                                <td style="word-break:break-all;style="width: 50%"">{% if value %}
-                                    <a href="{% url 'resultsclassificationmodel_detail' value %}" class=""> {% endif %}{{value}}</a></td>
-                            </tr>
-                        {% endif %}
-                    {% endfor %}
-                        
-                </tbody>
-            </table>
-
-
-        </div>
 <div>
 </div>
         <div class="d-flex justify-content-center">

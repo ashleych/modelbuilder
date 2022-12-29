@@ -81,7 +81,8 @@ class Experiment(models.Model):
         ('featureengineering','Feature engineering'),
         ('stationarity', 'Stationarity test'),
         ('manualvariableselection','Manual variable selection'),
-        ('classificationmodel','Build logistic regression model')
+        ('classificationmodel','Build logistic regression model'),
+        ('regressionmodel','Build regression model')
     ]
     STATUS_TYPE= [("NOT_STARTED","NOT STARTED"),("STARTED","STARTED"),("IN_PROGRESS","IN PROGRESS"),("DONE","DONE"),("ERROR","ERROR")]
     experiment_id= models.AutoField(primary_key=True)
@@ -244,17 +245,7 @@ class Stationarity(Experiment):
             else:
                 if self.experiment_status=='DONE' or self.experiment_status=='NOT_STARTED':
                             super(Stationarity, self).save(*args, **kwargs)
-                # from .tasks import do_stationarity_test_django_q
-                # do_stationarity_test_django_q(self.experiment_id)
 
-            # if self.experiment_status and self.experiment_status=='DONE':
-            #     self.create_variables_with_stationarity_results()
-            #     if self.do_create_data:
-            #         self.create_output_data()
-                
-            #     # self.experiment_status='DONE'
-            #     self.run_end_time=timezone.now()
-                # super(Stationarity, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
         if self.experiment_status:
@@ -267,11 +258,7 @@ class Manualvariableselection(Experiment):
 
     input_columns=models.TextField(max_length=20000,blank=True,null=True)
     keep_columns=models.TextField(max_length=20000,blank=True,null=True)
-    # def create_output_data(self):
-    #     pass
 
-    def subset_data(self):
-        return 1
 
     def save(self, *args, **kwargs):
             # self.slug = slugify(self.title)
@@ -290,7 +277,6 @@ class Manualvariableselection(Experiment):
                         self.run_start_time= timezone.now()
                         self.create_output_data()
                         self.run_end_time= timezone.now()
-                # df=self.subset_data()
             super(Manualvariableselection, self).save(*args, **kwargs)
             # if self.do_create_data:
             #         self.create_output_data(df)
@@ -339,8 +325,7 @@ class Manualvariableselection(Experiment):
                     train_data_name=self.name + "_output",no_of_cols=no_of_cols,no_of_rows=no_of_rows,column_names=column_names)
                     self.output_data=macro_file_obj
                     self.experiment_status="DONE"
-                    # spark.read.csv(output_dir)
-        # os.makedirs("output",exist_ok=True)
+
 class ClassificationMetrics(models.Model):
     type=models.CharField(max_length=100,blank=True,null=True)
     FPR=models.TextField(max_length=20000,blank=True,null=True)
@@ -396,17 +381,6 @@ class Classificationmodel(Experiment):
                             # logistic_results= t.run_logistic_regression(self.experiment_id,run_in_the_background=True) # to run in foreground, for checks
                         else:
                             logistic_results= t.run_logistic_regression(self.experiment_id)
-                            # train_results=ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
-                            # test_results=ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
-
-                            # self.results=ResultsClassificationmodel.objects.create(train_results=train_results,test_results=test_results,
-                            #             coefficients=json.dumps(logistic_results.overall_result.coefficients),
-                            #             feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
-                            # self.experiment_status='DONE'
-                            # self.run_end_time= timezone.now()
-                            # super(Classificationmodel, self).save(*args, **kwargs)
-                            # experiment=Experiment.objects.get(pk=self.experiment_id)
-                            # notification=NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
                 else:
                     print("Experiment status :",self.experiment_status)
                     if self.experiment_status=='DONE':
@@ -417,6 +391,79 @@ class Classificationmodel(Experiment):
                             self.run_start_time= timezone.now()
                             self.results=None
                             super(Classificationmodel, self).save(*args, **kwargs)
+
+class RegressionMetrics(models.Model):
+    type=models.CharField(max_length=100,blank=True,null=True)
+    mae=models.FloatField(blank=True,null=True)
+    r_squared=models.FloatField(blank=True,null=True)
+    mse=models.FloatField(blank=True,null=True)
+    rmse=models.FloatField(blank=True,null=True)
+    mae=models.FloatField(blank=True,null=True)
+    explained_variance =models.FloatField(blank=True,null=True)
+    experiment_id=models.IntegerField(blank=True,null=True)
+
+class ResultsRegressionmodel(models.Model):
+    coefficients=models.TextField(max_length=20000,blank=True,null=True)
+    intercept=models.FloatField(blank=True,null=True)
+    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    tvalues=models.TextField(max_length=20000,blank=True,null=True)
+    pvalues=models.TextField(max_length=20000,blank=True,null=True)
+    dispersion=models.FloatField(blank=True,null=True)
+    coefficientsStandardErrors=models.TextField(max_length=20000,blank=True,null=True)
+    nullDeviance=models.FloatField(blank=True,null=True)
+    residualDegreeOfFreedomNull=models.FloatField(blank=True,null=True)
+    residualDegreeOfFreedom=models.FloatField(blank=True,null=True)
+    deviance=models.FloatField(blank=True,null=True)
+    AIC=models.FloatField(blank=True,null=True)
+    train_results =models.ForeignKey(RegressionMetrics, on_delete=models.CASCADE, null=True,blank=True,related_name='train_results')
+    test_results =models.ForeignKey(RegressionMetrics, on_delete=models.CASCADE, null=True,blank=True,related_name='test_results')
+class Regressionmodel(Experiment):
+    label_col=models.CharField(max_length=100,blank=True,null=True)
+    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    train_split=models.FloatField(blank=True,null=True)
+    test_split=models.FloatField(blank=True,null=True)
+    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    ignored_columns=models.TextField(max_length=20000,blank=True,null=True)
+    cross_validation=models.BooleanField(default=False)
+    results =models.ForeignKey(ResultsRegressionmodel, on_delete=models.CASCADE, null=True,blank=True)
+
+    def get_absolute_url(self):
+        if self.experiment_status and self.experiment_status !='NOT_STARTED':
+            return reverse('regressionmodel_detail', args=[str(self.experiment_id)])
+        else:
+            return reverse('regressionmodel_update', args=[str(self.experiment_id)])
+    
+    def save(self, *args, **kwargs):
+            print(f"self run now : {self.run_now}")
+            if self._state.adding: 
+                self.experiment_type='regressionmodel'
+                self.experiment_status= 'NOT_STARTED'
+                super(Regressionmodel, self).save(*args, **kwargs)
+
+            else:
+                if  self.run_now:
+                        self.run_end_time=None
+                        self.run_start_time= timezone.now()
+                        self.results=None
+                        # from .tasks import run_logistic_regression # this is done to avoid 
+                        import logistic_build.tasks as t
+                        self.experiment_status='STARTED'
+                        super(Regressionmodel, self).save(*args, **kwargs)
+
+                        if self.run_in_the_background:
+                            async_task("logistic_build.tasks.run_glm_regression", self.experiment_id,run_in_the_background=True)
+                        else:
+                            t.run_glm_regression(self.experiment_id)
+                else:
+                    print("Experiment status :",self.experiment_status)
+                    if self.experiment_status=='DONE':
+                        super(Regressionmodel, self).save(*args, **kwargs)
+                    else:
+                        if self.experiment_status=='NOT_STARTED':
+                            self.run_end_time=None
+                            self.run_start_time= timezone.now()
+                            self.results=None
+                            super(Regressionmodel, self).save(*args, **kwargs)
 
 class NotificationModelBuildManager(models.Manager):
     def get_queryset(self):
@@ -441,18 +488,6 @@ class ExperimentFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='iexact')
     experiment_status = django_filters.ChoiceFilter(choices=Experiment.STATUS_TYPE,widget=django_filters.widgets.LinkWidget)
     experiment_type = django_filters.ChoiceFilter(choices=Experiment.EXPERIMENT_TYPE,widget=django_filters.widgets.LinkWidget)
-    # created_on_date= django_filters.DateFromToRangeFilter(widget=django_filters.widgets.RangeWidget(attrs={'placeholder': 'YYYY/MM/DD'}))
-
-    #     start = django_filters.DateFilter(
-    #     field_name='trademonthlystat__last_date', 
-    #     lookup_expr='gt',         
-    # )
-    
-    # end = django_filters.DateFilter(
-    #     field_name='trademonthlystat__last_date', 
-    #     lookup_expr='lt',        
-    # )
-    # experiment_status = django_filters.CharFilter(lookup_expr='iexact')
     created_on_date__gt = django_filters.NumberFilter(field_name='created_on_date', lookup_expr='year__gt',label="Start")
     created_on_date__lt = django_filters.NumberFilter(field_name='created_on_date', lookup_expr='year__lt', label='End')
 

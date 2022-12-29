@@ -1,7 +1,7 @@
 from django import forms
 
 from django.forms import ModelForm
-from .models import Experiment,Stationarity,Manualvariableselection,Classificationmodel
+from .models import Experiment,Stationarity,Manualvariableselection,Classificationmodel,Regressionmodel
 
 
 
@@ -20,7 +20,7 @@ class ExperimentForm(ModelForm):
         print("here")
         m = super(ExperimentForm, self).save(commit=False, *args, **kwargs)
 
-        models_dict = {'stationarity' : Stationarity, 'manualvariableselection' :Manualvariableselection,'classificationmodel':Classificationmodel}
+        models_dict = {'stationarity' : Stationarity, 'manualvariableselection' :Manualvariableselection,'classificationmodel':Classificationmodel,'regressionmodel':Regressionmodel}
         s=models_dict[m.experiment_type].objects.create(experiment_type=m.experiment_type, name=m.name,previous_experiment=m.previous_experiment,created_by=m.created_by)
         if m.previous_experiment:
             s.traindata = m.previous_experiment.output_data
@@ -54,6 +54,17 @@ class ClassificationmodelForm(forms.ModelForm):
    
     class Meta:
         model = Classificationmodel
+        fields = '__all__'
+        fields= [ "name", "traindata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","experiment_status"]
+        widgets = {'experiment_status': forms.HiddenInput()}
+    def clean(self):
+        # form.cleaned_data['extra']
+        cleaned_data = super().clean()
+        return cleaned_data
+class RegressionmodelForm(forms.ModelForm):
+   
+    class Meta:
+        model = Regressionmodel
         fields = '__all__'
         fields= [ "name", "traindata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","experiment_status"]
         widgets = {'experiment_status': forms.HiddenInput()}

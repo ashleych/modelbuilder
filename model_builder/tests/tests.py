@@ -6,10 +6,10 @@ import os
 from django.conf import settings
 from django.apps import apps
 
-from logistic_build.models import Experiment,Classificationmodel,NotificationModelBuild,Traindata,Stationarity,Manualvariableselection
+from logistic_build.models import Experiment,Classificationmodel,NotificationModelBuild,Traindata,Stationarity,Manualvariableselection, Regressionmodel
 # https://code.visualstudio.com/docs/python/tutorial-django
 
-
+from logistic_build.glr_spark import RegressionModel_spark,OverallRegressionResults,RegressionMetrics
 @pytest.mark.django_db
 def test_unauthorized(admin_client):
    url = reverse('traindata_list')
@@ -185,4 +185,29 @@ def test_chain_muliple_experiments(client,django_user_model):
     # assert(response.context_data['classificationmodel'].results_id >0)
     with open("yourhtmlfile_mvs.html", "wb") as file:
         file.write(response.content)
+
+import json
+@pytest.mark.django_db()
+def test_regression_spark_model(client,django_user_model):
     
+    """Test function using fixture of baked model."""
+    t=Traindata.objects.create(train_path='/home/ashleyubuntu/model_builder/car data.csv',train_data_name='new')
+    # t=Traindata.objects.get(train_path='input/input_IRPqAaa.csv')
+    username = "Siri"
+    password = "siri"
+    user = django_user_model.objects.create_user(username=username, password=password)
+    s=Regressionmodel.objects.create(traindata=t,name='Regression Experiment',experiment_type='regression',
+                                    label_col="Selling_Price",run_in_the_background=False,created_by=user,feature_cols=json.dumps(['Year', 'Present_Price', 'Kms_Driven', 'Owner']))
+    s.label_col='Selling_Price'
+    s.run_now=True
+    s.save()
+    assert isinstance( s, Regressionmodel)
+
+def test_regression_spark_function(client,django_user_model):
+    
+    """Test function using fixture of baked model."""
+    file='/home/ashleyubuntu/model_builder/car data.csv'
+    regression_result=RegressionModel_spark(filepath=file,label_col="Selling_Price",selected_columns=['Year', 'Present_Price', 'Kms_Driven', 'Owner'])
+    assert isinstance(regression_result.overall_result, OverallRegressionResults)
+    assert isinstance(regression_result.train_result, RegressionMetrics)
+    assert isinstance(regression_result.test_result, RegressionMetrics)

@@ -1,0 +1,55 @@
+{% extends 'logistic_build/index.html' %}
+
+{% block  list_view_content%}
+
+
+<script type="text/javascript">
+    train_data_dict = {{ train_data_dict|safe }};
+</script>
+
+    <!-- BOOTSTRAP FORM -->
+    
+<div class="container d-flex justify-content-center mt-5" style="width: 25%;">
+    <div class="col mt-5">
+
+<h2> classification</h2>
+        <form action="" method="post">
+            {% csrf_token %}
+            <table class="table">
+                {{form.as_table}}
+            </table>
+            <div class="container d-flex justify-content-center" style="width: 10%;">
+                <input type="submit" class="btn btn-primary btn-lg" value="SUBMIT" name="_run_now" style="margin-right: 30px; margin-top: 30px;">
+                <input type="submit" class="btn btn-primary btn-lg" value="SAVE AS DRAFT" name="_draft" style="margin-right: 30px; margin-top: 30px;">
+                <input type="submit" class="btn btn-danger btn-lg" style="margin-top: 30px;" onclick="window.location='{% url "all" %}'; return false;" value="Cancel">
+            </div>    
+        </form> 
+
+    </div>
+</div>
+
+{% block javascripts %}
+    <script type="text/javascript">
+        
+
+        
+        window.addEventListener('load', function() {
+
+                            v=$('#id_traindata').val();
+                            console.log(v);
+                            $('#id_feature_cols').html(train_data_dict[v]);
+
+            $( "#id_traindata" ).change(function() {
+                console.log("changed values");
+                v=$('#id_traindata').val();
+                console.log(train_data_dict[v]);
+                $('#id_feature_cols').html(train_data_dict[v]);
+            });
+        })
+    </script>
+        {% endblock %}
+    
+
+<!-- END BOOTSTRAP FORM -->
+
+{% endblock %}

@@ -24,8 +24,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic import RedirectView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse,reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,NotificationModelBuild
-from .forms import ClassificationmodelForm, ExperimentForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,NotificationModelBuild,RegressionMetrics,Regressionmodel,ResultsRegressionmodel
+from .forms import ClassificationmodelForm, ExperimentForm, RegressionmodelForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
 from .Logisticregression_spark import plot_roc,plot_precision_recall
 from django.contrib.auth.mixins import LoginRequiredMixin
 # from view_breadcrumbs import ListBreadcrumbMixin,DetailBreadcrumbMixin
@@ -114,7 +114,7 @@ class ExperimentFormView(LoginRequiredMixin,CreateView):
     # model =Experiment
     form_class=ExperimentForm
     # fields= '__all__'
-    template_name = 'logistic_build/stationarity_form.html'
+    template_name = 'logistic_build/experiment_form.html'
     
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -294,6 +294,8 @@ class ManualvariableselectionDetailView(LoginRequiredMixin,Manualvariableselecti
             context['current_experiment_list']=tuple([context[type].experiment_id,context[type].experiment_type,context[type].name])
 
         return context
+    
+
 class ManualvariableselectionCreateView(LoginRequiredMixin,ManualvariableselectionBaseView, CreateView):
     """View to create a new film"""
 
@@ -315,6 +317,15 @@ class ManualvariableselectionUpdateView(LoginRequiredMixin,UpdateView):
     def get_form_kwargs(self):
         kwargs = super(ManualvariableselectionUpdateView, self).get_form_kwargs()
         return kwargs
+    
+    def form_valid(self, form):
+        # This method is called when valid form data has been POSTed.
+        # It should return an HttpResponse.
+        # form.send_email()
+        if '_run_now' in form.data:
+            form.instance.run_now=True   #     this is done so that,when user clicks 'save as draft' then run_now is kept as false
+        form.instance.experiment_status='NOT_STARTED'
+        return super().form_valid(form)
 class ManualvariableselectionDeleteView(LoginRequiredMixin,ManualvariableselectionBaseView, DeleteView):
     """View to delete a film"""
 
@@ -525,6 +536,83 @@ def register_user(request):
         form = SignUpForm()
 
     return render(request, "accounts/register.html", {"form": form, "msg" : msg, "success" : success })
+
+
+
+class RegressionmodelBaseView(View):
+    model = Regressionmodel
+    fields = '__all__'
+    success_url = reverse_lazy('all')
+
+class RegressionmodelListView(LoginRequiredMixin,RegressionmodelBaseView, ListView):
+    """View to list all films.
+    Use the 'film_list' variable in the template
+    to access all Regressionmodel objects"""
+
+class RegressionmodelDetailView(LoginRequiredMixin,RegressionmodelBaseView, DetailView):
+    """View to list the details from one film.
+    Use the 'film' variable in the template to access
+    the specific film here and in the Views below"""
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['created_by']=context['regressionmodel'].created_by.username
+        if context['regressionmodel'].all_preceding_experiments:
+            context['previous_experiments_list']=json.loads(context['regressionmodel'].all_preceding_experiments)
+            context['current_experiment_list']=tuple([context['regressionmodel'].experiment_id,context['regressionmodel'].experiment_type,context['classificationmodel'].name])
+
+        return context
+class RegressionmodelCreateView(LoginRequiredMixin,RegressionmodelBaseView, CreateView):
+    """View to create a new film"""
+    fields= ['name','traindata']
+
+class RegressionmodelUpdateView(LoginRequiredMixin,UpdateView):
+    """View to update a film"""
+    model=Regressionmodel
+    form_class=RegressionmodelForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # context['load_template'] = 'assds'
+        train_data_dict ={}
+        for t in Traindata.objects.all().values():
+            train_data_dict[t['file_id']]=t['column_names']
+        context['train_data_dict']=json.dumps(train_data_dict)
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super(RegressionmodelUpdateView, self).get_form_kwargs()
+        # if 'data' in kwargs: #or check if self.request.method = POST
+        #     if '_run_now' in kwargs['data']:
+        #         kwargs['run_now']=['on']
+        return kwargs
+    def form_valid(self, form):
+        # This method is called when valid form data has been POSTed.
+        # It should return an HttpResponse.
+        # form.send_email()
+        if '_run_now' in form.data:
+            form.instance.run_now=True   #     this is done so that,when user clicks 'save as draft' then run_now is kept as false
+        form.instance.experiment_status='NOT_STARTED'
+        return super().form_valid(form)
+    
+    # def get_success_url(self):
+    #     a=1
+    #     return a
+
+class RegressionmodelDeleteView(LoginRequiredMixin,RegressionmodelBaseView, DeleteView):
+    """View to delete a film"""
+    template_name='logistic_build/experiment_confirm_delete.html'
+    
+    def get_context_data(self, **kwargs) :
+        context=super().get_context_data(**kwargs)
+        context['name']=context['object'].name
+        return context
+
+
+class RegressionmodelFormView(LoginRequiredMixin,CreateView):
+    # model =Experiment
+    form_class=RegressionmodelForm
+    # fields= '__all__'
+    template_name = 'logistic_build/regressionmodel_form.html'
 
 
 
