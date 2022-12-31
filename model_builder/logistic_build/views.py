@@ -140,10 +140,15 @@ class ExperimentListView(ExperimentBaseView, ListView):
     Use the 'film_list' variable in the template
     to access all Experiment objects"""
     model=Experiment
+    paginate_by=10
     
     def get_queryset(self):
         queryset =Experiment.objects.exclude(experiment_type='Input')
         return queryset
+    
+    def get_context_data(self, **kwargs):
+        s=super().get_context_data(**kwargs)
+        return s
 
 class ExperimentDetailView(ExperimentBaseView, RedirectView,DetailView):
     """View to list the details from one film.
@@ -633,7 +638,6 @@ class NotificationModelBuildUpdateView(LoginRequiredMixin,NotificationModelBuild
 
 class NotificationModelBuildDeleteView(LoginRequiredMixin,NotificationModelBuildBaseView, DeleteView):
     """View to delete a film"""
-
 
 
 

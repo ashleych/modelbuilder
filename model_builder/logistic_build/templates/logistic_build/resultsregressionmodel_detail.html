@@ -1,0 +1,58 @@
+{% extends 'logistic_build/index.html' %}
+
+{% block  list_view_content%}
+
+<div class="" style="width: 70%;">
+    <div class="col">
+        <h1 class="text-center">Results of Regression  model Details </h1>
+        <div class="d-flex justify-content-center">
+            {% if unread_notifications %}
+                <div>
+                    You have {{ unread_notifications }} unread notifications 
+                </div>
+            {% endif %}
+
+
+
+        </div>
+        <div>
+            {% if test_res_roc %}
+            <div>
+                {{ test_res_roc.rocPlot | safe}}
+                {{ test_res_roc.auc | safe}}
+            </div>
+            <div>
+                {{ test_res_pr.prPlot | safe}}
+                {{ test_res_pr.pr | safe}}
+            </div>
+            {% else %}
+            <div>
+                <p> No ROC details for test data available, this is likely to happen if there are no bads in the test data</p>
+            </div>
+            {% endif %}
+
+        </div>
+        <div>
+            {{ train_res_roc.rocPlot | safe}}
+            {{ train_res_roc.auc | safe}}
+        </div>
+        <div>
+            {{ train_res_pr.prPlot | safe}}
+            {{ train_res_pr.pr | safe}}
+        </div>
+<div>
+</div>
+        <div class="d-flex justify-content-center">
+            <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
+            {% comment %}
+  <!-- <a href="{% url 'variables' experiment_id=resultsclassificationmodel.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a> -->
+  <a href="{% url 'variables' experiment_id=resultsclassificationmodel.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a>
+  {% endcomment %}
+        </div>
+        <div class="d-flex justify-content-center">
+        </div>
+    </div>
+        
+</div>
+
+{% endblock  %}

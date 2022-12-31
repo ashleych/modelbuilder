@@ -52,6 +52,7 @@ urlpatterns = [
     path('regressionmodel/<int:pk>/detail', views.RegressionmodelDetailView.as_view(), name='regressionmodel_detail'),
     path('regressionmodel/create/', views.RegressionmodelCreateView.as_view(), name='regressionmodel_create'),
     path('regressionmodel/<int:pk>/update/', views.RegressionmodelUpdateView.as_view(), name='regressionmodel_update'),
+    path('regressionmodel/<int:pk>/delete/', views.RegressionmodelDeleteView.as_view(), name='regressionmodel_delete'),
 
     path('notificationmodelbuild', views.NotificationModelBuildListView.as_view(), name='notificationmodelbuild'),
     path('notificationmodelbuild/<int:pk>/update/', views.NotificationModelBuildUpdateView.as_view(), name='notificationmodelbuild_update'),

@@ -486,7 +486,7 @@ import django_filters
 
 class ExperimentFilter(django_filters.FilterSet):
     # This is used to power the filters to the right of the all_experiments view
-    name = django_filters.CharFilter(lookup_expr='iexact')
+    name = django_filters.CharFilter(lookup_expr='icontains')
     experiment_status = django_filters.ChoiceFilter(choices=Experiment.STATUS_TYPE,widget=django_filters.widgets.LinkWidget)
     experiment_type = django_filters.ChoiceFilter(choices=Experiment.EXPERIMENT_TYPE,widget=django_filters.widgets.LinkWidget)
     created_on_date__gt = django_filters.NumberFilter(field_name='created_on_date', lookup_expr='year__gt',label="Start")

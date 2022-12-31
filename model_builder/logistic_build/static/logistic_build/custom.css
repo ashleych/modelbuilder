@@ -35,3 +35,9 @@
     right: 25px;
     top: 25px;
 }
+
+
+
+#filter_form .form-control {
+    border: None !important ;
+}

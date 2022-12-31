@@ -1,3 +1,25 @@
 -AUTH_PASSWORD_VALIDATORS - uncomment
-
+https://github.com/app-generator/django-datta-able/blob/master/apps/templates/home/index.html -- our template source
 -DEBUG = TRUE 
+https://developerzen.com/best-practices-writing-production-grade-pyspark-jobs-cb688ac4d20f
+
+
+https://www.java-success.com/10-databricks-spark-ml-linear-regression/
+
+
+
+Good sources 
+https://link.springer.com/book/10.1007/978-1-4302-5810-0 - Pro django 
+
+https://django-simple-history.readthedocs.io/en/latest/quick_start.html - django simple history 
+
+
+https://stackoverflow.com/questions/501719/dynamically-adding-a-form-to-a-django-formset - formsets, dynamic forms, add button 
+
+https://stackoverflow.com/questions/71967813/django-django-filter-and-pagination  - filter with pagination example provided by Kaiss B.
+
+
+http://rasbt.github.io/mlxtend/user_guide/feature_selection/ExhaustiveFeatureSelector/
+
+
+https://stackabuse.com/applying-wrapper-methods-in-python-for-feature-selection/

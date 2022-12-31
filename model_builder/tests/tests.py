@@ -225,6 +225,7 @@ def test_regression_spark_model(client,django_user_model):
     s.run_now=True
     s.save()
     exp_id=s.experiment_id
+    # have to read using exp_id from data base again as the save actually happens recuirsively.
     saved_regression=Regressionmodel.objects.get(pk=exp_id)
     assert isinstance( s, Regressionmodel)
 

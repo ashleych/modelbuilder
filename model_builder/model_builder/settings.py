@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     # 'view_breadcrumbs',
     # 'dynamic_breadcrumbs'
     'logistic_build',
-    'django_filters'
+    'django_filters',
+     'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -215,3 +216,4 @@ LOGIN_REDIRECT_URL = 'success'
 
 
 BREADCRUMBS_HOME_LABEL = "My new home"
+CRISPY_TEMPLATE_PACK = 'bootstrap4'

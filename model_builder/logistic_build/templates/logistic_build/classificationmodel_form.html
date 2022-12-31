@@ -1,5 +1,5 @@
 {% extends 'logistic_build/index.html' %}
-
+{% load crispy_forms_tags %}
 {% block  list_view_content%}
 
 
@@ -10,14 +10,13 @@
     <!-- BOOTSTRAP FORM -->
     
 <div class="container d-flex justify-content-center mt-5" style="width: 25%;">
-    <div class="col mt-5">
+    <div class="">
 
 <h2> Regression Model </h2>
         <form action="" method="post">
             {% csrf_token %}
-            <table class="table">
-                {{form.as_table}}
-            </table>
+                 {{form|crispy}}
+
             <div class="container d-flex justify-content-center" style="width: 10%;">
                 <input type="submit" class="btn btn-primary btn-lg" value="SUBMIT" name="_run_now" style="margin-right: 30px; margin-top: 30px;">
                 <input type="submit" class="btn btn-primary btn-lg" value="SAVE AS DRAFT" name="_draft" style="margin-right: 30px; margin-top: 30px;">

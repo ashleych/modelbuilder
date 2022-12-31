@@ -1,58 +1,111 @@
 {% extends 'logistic_build/index.html' %}
-
+{% load crispy_forms_tags %}
 {% block  list_view_content%}
+<!--[ Recent Users ] end-->
 
-<div class="" style="width:70%;">
+<div class="col-sm-12">
+    <div class="row">
+    <div class="col-xl-8 col-md-6">
+        <div class="card Recent-Users">
+            <div class="card-header">
+                <h5>Experiments List New</h5>
+            </div>
+            <div class="card-block px-0 py-3">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <tbody>
 
-    <div class="d-flex justify-content-center">
-        <table class="table table-striped mt-5">
-            <thead>
-            <tr>
-                {% comment %} <th>#</th> {% endcomment %}
-                <th class="text-center" scope="col">Name</th>
-                <th class="text-center" scope="col">Type</th>
-                <th class="text-center" scope="col"></th>
-                <th class="text-center" scope="col"></th>
-                <th></th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody> 
-            {% for experiment in experiment_list %}
+                {% for experiment in experiment_list %}
             
-                <tr>
-                {% comment %} <th scope="row">{{forloop.counter}}</th> {% endcomment %}
-                
- 
-                {% if experiment.experiment_type != 'input' %}
-                    <td class="ml-5"><a href="{% url experiment.experiment_type|add:'_detail' experiment.experiment_id %}">{{experiment.name}}</a></td>
-                    <td class="ml-5">{{experiment.name}}</td>
-                    <td class="text-center">{{experiment.experiment_type}}</td>
-                    <td class="text-center">{{experiment.experiment_status}}</td>
-    
-                    <td><a href="{% url experiment.experiment_type|add:'_update' experiment.experiment_id %} ">Update</a></td>
-                    <td><a href="{% url experiment.experiment_type|add:'_delete' experiment.experiment_id %} ">Delete</a></td>
+                <tr class="unread">
+                    {% if experiment.experiment_type != 'input' %}
+                    <td class="ml-5"><a href="{% url experiment.experiment_type|add:'_detail' experiment.experiment_id %}">{{experiment.name}}</a>
+                    </td>
+                    <td class="ml-5">
+                        <h6 class="mb-1">
+                            {{experiment.get_experiment_type_display}}
+                        </h6>
+                        <p class="m-0">  {{experiment.experiment_status}} </p>
+                    </td>
+                    {% if experiment.run_end_time %}
+                    <td>
+                        <p class="m-0"><i class="fas fa-circle text-c-green f-10 m-r-15"></i> {{ experiment.run_end_time}}</p>
+                    </td>
+                    {% else %}
+                    <td>
+                        <p class="m-0"><i class="fas fa-circle text-c-red f-10 m-r-15"></i> {{ experiment.run_end_time}}</p>
+                    </td>
                     {% endif %}
-                    </tr>
-                    {% endfor %}
-
-                    </tbody>
-                </table>
+                    
+                    <td><a href="{% url experiment.experiment_type|add:'_delete' experiment.experiment_id %}" class="label theme-bg2 text-white f-12">Delete</a>
+                            <a
+                            href="{% url experiment.experiment_type|add:'_update' experiment.experiment_id %}" class="label theme-bg text-white f-12">Update</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if is_paginated %}
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+      <li><a href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+    {% else %}
+      <li class="disabled"><span>&laquo;</span></li>
+    {% endif %}
+    {% for i in paginator.page_range %}
+      {% if page_obj.number == i %}
+        <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+      {% else %}
+        <li><a href="?page={{ i }}">{{ i }}</a></li>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+      <li><a href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+    {% else %}
+      <li class="disabled"><span>&raquo;</span></li>
+    {% endif %}
+  </ul>
+{% endif %}
     </div>
+</div>
+</div>
+</div>
+                                    
+<div class="col-xl-4 col-md-6">
+    <div class="card user-list">
+        <div class="card-header">
+            <h5>Apply Filters</h5>
+        </div>
+        <div class="card-block">
+            <div class="row align-items-center justify-content-center m-b-20">
+                <div class="d-flex justify-content-center">
+                    <div>
 
-</div>
+                        <form id='filter_form' method="get">
+                            <!-- {{ filter.form.as_p }} -->
+                            {{ filter.form | crispy }}
+                            <input type="submit" />
+                        </form>
 
-<div class="d-flex justify-content-center">
-    
-    <form method="get">
-        {{ filter.form.as_p }}
-        <input type="submit" />
-    </form>
+                    </div>
+                </div>
+ 
+            </div>
+        </div>
+    </div>
 </div>
-</div>
-<div class="d-flex justify-content-center">
-    <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
 </div>
         
+
+    
 </div>
+
+</div>
+
+</div>
+
+
+<!-- [ rating list ] starts-->
+<!-- [ rating list ] end-->
 {% endblock  %}
