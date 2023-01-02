@@ -128,7 +128,7 @@ class LogisticRegressionModel_spark():
   def __init__(self, 
                 seed: int = 2022,
                 # filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv",
-                filepath = "/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv",
+                filepath = '/home/oem/Downloads/subset.csv',
                 label_col = 'def_trig',
                 remove_cols_list = ["_c0", "Date", "Date.1"],
                 prediction_cols = ["M97"],
@@ -388,7 +388,7 @@ class LogisticRegressionModel_spark():
 if __name__=='main':
     lr_test = LogisticRegressionModel_spark(filepath='/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv')    
     # lr_test = LogisticRegressionModel_spark()    
-    filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
+    filepath = '/home/oem/Downloads/subset.csv'
 else:
     # lr_test = LogisticRegressionModel_spark(filepath='/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv')    
     # print(str(lr_test.test_result))
@@ -464,7 +464,7 @@ def evaluation_metrics_mllib(model,training,test):
 
 # %%
 import pandas as pd
-filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
+filepath = '/home/oem/Downloads/subset.csv'
 pd.read_csv(filepath,nrows=10000).to_csv('subset_merged.csv')
 
 # %%
