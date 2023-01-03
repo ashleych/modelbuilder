@@ -20,7 +20,7 @@
             </table>
             <div class="container d-flex justify-content-center" style="width: 10%;">
                                 <input type="submit" class="btn btn-primary btn-lg" value="SUBMIT" name="_run_now" style="margin-right: 30px; margin-top: 30px;">
-                <input type="submit" class="btn btn-primary btn-lg" value="SAVE AS DRAFT" name="_draft" style="margin-right: 30px; margin-top: 30px;">
+                <input type="submit" class="btn btn-primary btn-lg" value="SAVE AS DRAFT" name="_draft" id="_draft" style="margin-right: 30px; margin-top: 30px;">
                 <input type="submit" class="btn btn-danger btn-lg" style="margin-top: 30px;" onclick="window.location='{% url "all" %}'; return false;" value="Cancel">
             </div>    
         </form> 
@@ -28,12 +28,35 @@
     </div>
 </div>
 
+  <div aria-live="polite" aria-atomic="true" style="min-height: 200px;">
+    <div class="toast" style="position: absolute; bottom: 0; right: 0; z-index: 9999; float: right;" data-delay="10000">
+      <div class="toast-header">
+        <strong class="mr-auto">Model Builder</strong>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="toast-body">
+        Saved Manually Selected Variable as Draft!
+      </div>
+    </div>
+  </div>
+  
+
+
 {% block javascripts %}
+<!-- <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"/>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script> -->
+
     <script type="text/javascript">
         
         
         window.addEventListener('load', function() {
-
+                            console.log("working");
+    
+                            $(".toast").toast('hide');
                             v=$('#id_traindata').val();
                             console.log(v);
                             if ($('#id_keep_columns').is(':empty')){
@@ -46,8 +69,16 @@
                 console.log(train_data_dict[v]);
                 $('#id_keep_columns').html(train_data_dict[v]);
             });
-        })
+
+            $("#_draft").on('click', function(){
+                    $(".toast").toast('show');
+            });
+        });
+      
+
     </script>
+
+
         {% endblock %}
     
 
