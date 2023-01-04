@@ -1,7 +1,7 @@
 .vscode/
 input/
 output/
-model_builder_venv/
+# model_builder_venv/
 __pycache__
 # */*/migrations/
 *.csv

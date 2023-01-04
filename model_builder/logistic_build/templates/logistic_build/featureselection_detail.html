@@ -1,0 +1,55 @@
+{% extends 'logistic_build/index.html' %}
+{% block  list_view_content%}
+
+
+
+<div class="" style="width: 70%;">
+    <div class="col">
+        <h1 class="text-center">Regression model Details </h1>
+        {% include 'logistic_build/includes/previous_experiments.html' %}
+
+        <div class="d-flex justify-content-center">
+            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for label, value in featureselection.get_fields  %}
+                    {% if not label == "colnames" and not label == "created by" %}
+                        <tr>
+                            <td>{{label | upper}}</td>
+                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
+                        </tr>
+                    {% endif %}
+
+                    {% if label == "created by" %}
+                    
+                        <tr>
+                            <td>{{label | upper}}</td>
+                            <td style="word-break:break-all;style="width: 50%"">{{created_by}}</td>
+                        </tr>
+                    
+                    {% endif %}
+                    {% endfor %}
+                        
+                </tbody>
+            </table>
+
+
+        </div>
+<div>
+        <div class="d-flex justify-content-center">
+            <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
+
+        </div>
+        <div class="d-flex justify-content-center">
+        </div>
+    </div>
+        
+</div>
+
+{% endblock  %}

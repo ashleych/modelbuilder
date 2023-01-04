@@ -3,14 +3,16 @@ from .stationarity_tests import adfuller_test,kpss_test
 import pandas as pd
 import json
 
-from model_builder.celery import app
+# from model_builder.celery import app
 import logistic_build.models as m
-from pathlib import Path
 import os
 from django.utils import timezone
 from .Logisticregression_spark import LogisticRegressionModel_spark
-from .glr_spark import RegressionModel_spark
+from .Logisticregression_sklearn import LogisticRegressionModel_sklearn as lr_sk
 
+from .glr_spark import RegressionModel_spark
+from logistic_build.scripts import sklearn_multi_model_selection
+from pathlib import Path
 from django.conf import settings
 
 def do_stationarity_test_django_q(experiment_id):
@@ -59,14 +61,20 @@ def run_logistic_regression(experiment_id):
                 ValueError("Input file doesnt exist")
         print(experiment.traindata.train_path)
         print(experiment.label_col)
-        logistic_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, label_col=experiment.label_col ) 
+        if experiment.enable_spark:
+            logistic_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, label_col=experiment.label_col ) 
+        else:
+            logistic_results = lr_sk(filepath=experiment.traindata.train_path, label_col=experiment.label_col ) 
+            
         if True:
             train_results=m.ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
             test_results=m.ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
 
             experiment.results=m.ResultsClassificationmodel.objects.create(train_results=train_results,test_results=test_results,
                         coefficients=json.dumps(logistic_results.overall_result.coefficients),
-                        feature_cols= json.dumps(logistic_results.overall_result.feature_cols))
+                        train_nrows=logistic_results.overall_result.train_nrows,
+                        test_nrows=logistic_results.overall_result.test_nrows,
+                        features= json.dumps(logistic_results.overall_result.features))
             experiment.experiment_status='DONE'
             experiment.run_end_time= timezone.now()
             experiment.run_now=False
@@ -107,3 +115,26 @@ def run_glm_regression(experiment_id):
             notification=m.NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
             return 
         return regression_results
+
+
+def run_feature_selection(experiment_id):
+        experiment = m.Featureselection.objects.get(experiment_id=experiment_id)
+    
+        feature_selection_results = sklearn_multi_model_selection.FeatureSelection(traindata_path=experiment.traindata.train_path,**vars(experiment) )
+        model_subsets = feature_selection_results.models.subsets_
+        experiment.experiment_status='DONE'
+        experiment.run_end_time= timezone.now()
+        experiment.run_now=False
+        experiment.save()
+        experiment=m.Experiment.objects.get(experiment_id=experiment_id)
+        notification=m.NotificationModelBuild.objects.create(is_read=False,timestamp=timezone.now(), message='Feature selection Experiment Successful',experiment=experiment,created_by=experiment.created_by,experiment_type=experiment.experiment_type)
+            # regression_results = sklearn_multi_model_selection.FeatureSelection(traindata=experiment.traindata.train_path, label_col=experiment.label_col,feature_cols=experiment.feature_cols,exclude_features=) 
+
+        #     self.remove_constant_columns()
+        # self.remove_quasi_constant_columns(variance_threshold=0.01)
+        # # self.remove_duplicate_columns()
+        # self.keep_numeric_columns_only()
+        # self.remove_correlated_columns()
+        # self.treat_nas()
+        # self.random_forest_feature_selector()
+        # self.exhaustive_model_builder()

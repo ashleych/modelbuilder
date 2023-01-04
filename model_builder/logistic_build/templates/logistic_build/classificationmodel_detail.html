@@ -27,11 +27,18 @@
 
                     {% if label == "created by" %}
                     
-                        <tr>
-                            <td>{{label | upper}}</td>
-                            <td style="word-break:break-all;style="width: 50%"">{{created_by}}</td>
-                        </tr>
+                    <tr>
+                        <td>{{label | upper}}</td>
+                        <td style="word-break:break-all;style="width: 50%"">{{created_by}}</td>
+                    </tr>
                     
+                    {% endif %}
+                    {% if label == "results" %}
+                    <tr>
+                        <td>{{label | upper}}</td>
+                        <td style="word-break:break-all;style="width: 50%"">            <a href="{% url 'resultsclassificationmodel_detail' pk=value %}" >{{ value }} </a></td>
+                    </tr>
+
                     {% endif %}
                     {% endfor %}
                         

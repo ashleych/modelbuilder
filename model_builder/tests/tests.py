@@ -6,10 +6,13 @@ import os
 from django.conf import settings
 from django.apps import apps
 
-from logistic_build.models import Experiment,Classificationmodel,NotificationModelBuild,Traindata,Stationarity,Manualvariableselection, Regressionmodel
+from logistic_build.models import Experiment,Classificationmodel,NotificationModelBuild,Traindata,Stationarity,Manualvariableselection, Regressionmodel,Featureselection
 # https://code.visualstudio.com/docs/python/tutorial-django
 
 from logistic_build.glr_spark import RegressionModel_spark,OverallRegressionResults,RegressionMetrics
+from  logistic_build.scripts import sklearn_multi_model_selection
+import pandas as pd
+
 @pytest.mark.django_db
 def test_unauthorized(admin_client):
    url = reverse('traindata_list')
@@ -189,26 +192,41 @@ def test_chain_muliple_experiments(client,django_user_model):
 
 
 @pytest.fixture()
-def classificationmodelbuild_save(django_user_model,django_db_blocker):
+def classificationmodelbuild_save(django_user_model,django_db_blocker,enable_spark,train_data_path,label_col):
     """Fixture for baked Customer model."""
-    t=Traindata.objects.create(train_path='input/input_IRPqAaa.csv',train_data_name='new')
+    t=Traindata.objects.create(train_path=train_data_path,train_data_name='new_train_data')
     # t=Traindata.objects.get(train_path='input/input_IRPqAaa.csv')
     username = "Siri_2"
     password = "siri_2"
     user = django_user_model.objects.create_user(username=username, password=password)
-    with django_db_blocker.unblock():
-        c=Classificationmodel.objects.create(traindata=t,name='new',experiment_type='classificationmodel',label_col='def_trig',run_now=True,run_in_the_background=False,created_by=user)
-        c.run_now = True
-        c.save()
-        pass
+    # with django_db_blocker.unblock():
+    c=Classificationmodel.objects.create(traindata=t,name='new',experiment_type='classificationmodel',label_col=label_col,run_now=True,run_in_the_background=False,created_by=user,enable_spark=enable_spark)
+    c.run_now = True
+    c.save()
+        # pass
     return c
 
 @pytest.mark.django_db(transaction=True)
-def test_using_classificationmodelbuild( classificationmodelbuild_save):
+@pytest.mark.parametrize('enable_spark', [False])
+@pytest.mark.parametrize('train_data_path', ['/home/ashleyubuntu/model_builder/sample_classification.csv'])
+@pytest.mark.parametrize('label_col', ['TARGET'])
+def test_using_classificationmodelbuild( client,classificationmodelbuild_save):
     """Test function using fixture of baked model."""
     a=classificationmodelbuild_save
-    assert isinstance( a, NotificationModelBuild)
+    assert isinstance( a, Classificationmodel)
 
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize('enable_spark', [True])
+@pytest.mark.parametrize('train_data_path', ['/home/ashleyubuntu/model_builder/sample_classification.csv'])
+@pytest.mark.parametrize('label_col', ['TARGET'])
+def test_using_classificationmodelbuild_with_spark( client,classificationmodelbuild_save):
+    """Test function using fixture of baked model."""
+    a=classificationmodelbuild_save
+    assert isinstance( a, Classificationmodel)
+    # url = reverse('resultsclassificationmodel_detail', kwargs={'pk': c.experiment_id})
+    # response = client.get(url)
+    # assert response.status_code==200
 import json
 @pytest.mark.django_db()
 def test_regression_spark_model(client,django_user_model):
@@ -237,3 +255,19 @@ def test_regression_spark_function(client,django_user_model):
     assert isinstance(regression_result.overall_result, OverallRegressionResults)
     assert isinstance(regression_result.train_result, RegressionMetrics)
     assert isinstance(regression_result.test_result, RegressionMetrics)
+
+def test_multi_model_selection(django_user_model):
+    fp='/home/ashleyubuntu/model_builder/santander/santander_train_2k.csv'
+    santander_data =Traindata.objects.create(train_path=fp,train_data_name='santander')
+    # t=Traindata.objects.get(train_path='input/input_IRPqAaa.csv')
+    username = "Siri"
+    password = "siri"
+    user = django_user_model.objects.create_user(username=username, password=password)
+    # santandar_data = pd.read_csv("./santander/train.csv", nrows=30000)
+
+    # mfs= sklearn_multi_model_selection.FeatureSelection(santander_data,'TARGET',max_features=2,min_features=2,cv=0,short_list_max_features=2)
+    s=Featureselection.objects.create(traindata=santander_data,name='Feat_selection',experiment_type='featuresselection',
+                    label_col="TARGET",run_in_the_background=False,created_by=user,cross_validation=0,max_features=3,short_list_max_features=3)
+    s.run_now=True
+    s.save()
+    pass

@@ -81,6 +81,7 @@ class Experiment(models.Model):
         ('featureengineering','Feature engineering'),
         ('stationarity', 'Stationarity test'),
         ('manualvariableselection','Manual variable selection'),
+        ('featureselection','Feature Selection'),
         ('classificationmodel','Build logistic regression model'),
         ('regressionmodel','Build regression model')
     ]
@@ -332,15 +333,30 @@ class ClassificationMetrics(models.Model):
     FPR=models.TextField(max_length=20000,blank=True,null=True)
     TPR=models.TextField(max_length=20000,blank=True,null=True)
     areaUnderROC=models.FloatField(blank=True,null=True)
-    precision=models.TextField(max_length=20000,blank=True,null=True)
-    recall=models.TextField(max_length=20000,blank=True,null=True)
-    thresholds=models.TextField(max_length=20000,blank=True,null=True)
+    fp=models.FloatField(blank=True,null=True)
+    tp=models.FloatField(blank=True,null=True)
+    fn=models.FloatField(blank=True,null=True)
+    tn=models.FloatField(blank=True,null=True)
+    precision=models.FloatField(blank=True,null=True)
+    recall=models.FloatField(blank=True,null=True)
+    
+    accuracy=models.FloatField(blank=True,null=True)
+    npv=models.FloatField(blank=True,null=True)
+    precision_plot_data=models.TextField(max_length=20000,blank=True,null=True)
+    recall_plot_data=models.TextField(max_length=20000,blank=True,null=True)
+    pr_thresholds=models.TextField(max_length=20000,blank=True,null=True)
+    f1_score=models.FloatField(blank=True,null=True)
     areaUnderPR=models.FloatField(blank=True,null=True)
+    specificity=models.FloatField(blank=True,null=True)
     experiment_id=models.IntegerField(blank=True,null=True)
+
+
 
 class ResultsClassificationmodel(models.Model):
     coefficients=models.TextField(max_length=20000,blank=True,null=True)
-    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    features=models.TextField(max_length=20000,blank=True,null=True)
+    train_nrows=models.IntegerField(blank=True,null=True)
+    test_nrows=models.IntegerField(blank=True,null=True)
     train_results =models.ForeignKey(ClassificationMetrics, on_delete=models.CASCADE, null=True,blank=True,related_name='train_results')
     test_results =models.ForeignKey(ClassificationMetrics, on_delete=models.CASCADE, null=True,blank=True,related_name='test_results')
 class Classificationmodel(Experiment):
@@ -495,3 +511,67 @@ class ExperimentFilter(django_filters.FilterSet):
     class Meta:
         model = Experiment
         fields = ['experiment_type', 'name','experiment_status']
+
+class Featureselection(Experiment):
+
+    TASK_TYPE = [('regression','Regression'),('classification','Classification')]
+    SCORING_TYPE = [('roc_auc','ROC AUC'),('mse','MSE')]
+    label_col=models.CharField(max_length=100,blank=True,null=True)
+    feature_cols=models.TextField(max_length=20000,blank=True,null=True)
+    train_split=models.FloatField(blank=True,null=True)
+    test_split=models.FloatField(blank=True,null=True)
+    exclude_features=models.TextField(max_length=20000,blank=True,null=True)
+    fixed_features=models.TextField(max_length=20000,blank=True,null=True)
+    cross_validation=models.IntegerField(default=5,null=True,blank=True)
+    results =models.ForeignKey(ResultsRegressionmodel, on_delete=models.CASCADE, null=True,blank=True)
+    max_features=models.IntegerField(default=5,blank=True,null=True)
+    min_features=models.IntegerField(default=2,blank=True,null=True)
+    short_list_max_features=models.IntegerField(default=5,blank=True,null=True)
+    regression_or_classification=models.CharField(max_length=20,choices=TASK_TYPE,default='regression')
+    scoring=models.CharField(max_length=10,choices=SCORING_TYPE, default='roc_auc')
+    remove_constant_features=models.BooleanField(default=False,null=True,blank=True)
+    remove_quasi_constant_features=models.BooleanField(default=False,null=True,blank=True)
+    variance_threshold=models.BooleanField(default=False,null=True,blank=True) #for quasi constant check
+    correlation_check =models.BooleanField(default=False,null=True,blank=True)
+    correlation_threshold=models.FloatField(blank=True,null=True)
+    treat_missing = models.BooleanField(default=False,null=True,blank=True)
+    variables_selected=  models.BooleanField(default=False,null=True,blank=True)
+    do_exhaustive_search = models.BooleanField(default=False,null=True,blank=True)
+
+    def get_absolute_url(self):
+        if self.experiment_status and self.experiment_status !='NOT_STARTED':
+            return reverse('featureselection_detail', args=[str(self.experiment_id)])
+        else:
+            return reverse('featureselection_update', args=[str(self.experiment_id)])
+    
+    def save(self, *args, **kwargs):
+            print(f"self run now : {self.run_now}")
+            if self._state.adding: 
+                self.experiment_type='featureselection'
+                self.experiment_status= 'NOT_STARTED'
+                super(Featureselection, self).save(*args, **kwargs)
+
+            else:
+                if  self.run_now:
+                        self.run_end_time=None
+                        self.run_start_time= timezone.now()
+                        self.results=None
+                        import logistic_build.tasks as task_runner
+                        self.experiment_status='STARTED'
+                        super(Featureselection, self).save(*args, **kwargs)
+
+                        if self.run_in_the_background:
+                            async_task("logistic_build.tasks.run_feature_selection", self.experiment_id)
+                        else:
+                            task_runner.run_feature_selection(self.experiment_id)
+                else:
+                    print("Experiment status :",self.experiment_status)
+                    if self.experiment_status=='DONE':
+                        super(Featureselection, self).save(*args, **kwargs)
+                    else:
+                        if self.experiment_status=='NOT_STARTED':
+                            self.run_end_time=None
+                            self.run_start_time= timezone.now()
+                            self.results=None
+                            super(Featureselection, self).save(*args, **kwargs)
+

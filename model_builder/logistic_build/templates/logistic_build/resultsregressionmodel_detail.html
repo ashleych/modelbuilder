@@ -13,6 +13,33 @@
             {% endif %}
 
 
+        <div class="d-flex justify-content-center">
+            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for label, value in res.get_fields  %}
+
+                    {% if not label == "created_by" %}
+                    
+                        <tr>
+                            <td>{{label | upper}}</td>
+                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
+                        </tr>
+                    
+                    {% endif %}
+                    {% endfor %}
+                        
+                </tbody>
+            </table>
+
+
+        </div>
 
         </div>
         <div>

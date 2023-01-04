@@ -24,12 +24,12 @@ from django.views.generic.detail import DetailView
 from django.views.generic import RedirectView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse,reverse_lazy
-from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,NotificationModelBuild,RegressionMetrics,Regressionmodel,ResultsRegressionmodel
-from .forms import ClassificationmodelForm, ExperimentForm, RegressionmodelForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm
+from .models import Traindata,Variables,Experiment,Stationarity,Manualvariableselection,Classificationmodel,ResultsClassificationmodel,NotificationModelBuild,RegressionMetrics,Regressionmodel,ResultsRegressionmodel,Featureselection
+from .forms import ClassificationmodelForm, ExperimentForm, RegressionmodelForm,StationarityForm,ManualvariableselectionForm,ClassificationmodelForm,FeatureselectionForm
 from .Logisticregression_spark import plot_roc,plot_precision_recall
 from django.contrib.auth.mixins import LoginRequiredMixin
 # from view_breadcrumbs import ListBreadcrumbMixin,DetailBreadcrumbMixin
-
+from .forms import ExampleForm
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
     # return render(request, 'logistic_build/index.html')
@@ -110,17 +110,18 @@ def experiment_start(request):
     if "GET" == request.method:
         return render(request, "logistic_build/experiment_start.html")
 
-class ExperimentFormView(LoginRequiredMixin,CreateView):
+class ExperimentFormView(CreateView):
     # model =Experiment
     form_class=ExperimentForm
+    # form_class=ExampleForm
     # fields= '__all__'
     template_name = 'logistic_build/experiment_form.html'
     
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
-    # def __init__(self, *args, **kwargs):
-    #     super(ExperimentFormView, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(ExperimentFormView, self).__init__(*args, **kwargs)
     # @method_decorator(login_required)
     # def dispatch(self, *args, **kwargs):
     #     return super(PlaceEventFormView, self).dispatch(*args, **kwargs)
@@ -459,16 +460,20 @@ class ResultsClassificationmodelDetailView(LoginRequiredMixin,ResultsClassificat
 
         def get_precision_recall_plot(result, type ='train'):
             view_dict={}
-            precision=json.loads(getattr(getattr(result,type+'_results'),'precision'))
-            recall=json.loads(getattr(getattr(result,type+'_results'),'recall'))
+            precision=json.loads(getattr(getattr(result,type+'_results'),'precision_plot_data'))
+            recall=json.loads(getattr(getattr(result,type+'_results'),'recall_plot_data'))
             pr=getattr(getattr(result,type+'_results'),'areaUnderPR')
-            fig=plot_precision_recall(precision,recall,pr)
+            fig=plot_precision_recall(recall_plot_data=recall,precision_plot_data=precision,areaUnderPR=pr)
 
             plotly_plot_obj = plot({'data': fig}, output_type='div')
             view_dict['prPlot']=plotly_plot_obj
             view_dict['pr']=pr
             return view_dict
         res =context['resultsclassificationmodel']
+        context['coefficients']=context['resultsclassificationmodel'].coefficients
+        context['features']=context['resultsclassificationmodel'].features
+        context['train_nrows']=context['resultsclassificationmodel'].train_nrows
+        context['test_nrows']=context['resultsclassificationmodel'].test_nrows
 
 
         context['train_res_roc']=get_fpr_tpr(res,type='train')
@@ -620,6 +625,81 @@ class RegressionmodelFormView(LoginRequiredMixin,CreateView):
     template_name = 'logistic_build/regressionmodel_form.html'
 
 
+class FeatureselectionBaseView(View):
+    model = Featureselection
+    fields = '__all__'
+    success_url = reverse_lazy('all')
+
+class FeatureselectionListView(LoginRequiredMixin,FeatureselectionBaseView, ListView):
+    """View to list all films.
+    Use the 'film_list' variable in the template
+    to access all Featureselection objects"""
+
+class FeatureselectionDetailView(LoginRequiredMixin,FeatureselectionBaseView, DetailView):
+    """View to list the details from one film.
+    Use the 'film' variable in the template to access
+    the specific film here and in the Views below"""
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['created_by']=context['featureselection'].created_by.username
+        if context['featureselection'].all_preceding_experiments:
+            context['previous_experiments_list']=json.loads(context['featureselection'].all_preceding_experiments)
+            context['current_experiment_list']=tuple([context['featureselection'].experiment_id,context['featureselection'].experiment_type,context['classificationmodel'].name])
+
+        return context
+class FeatureselectionCreateView(LoginRequiredMixin,FeatureselectionBaseView, CreateView):
+    """View to create a new film"""
+    fields= ['name','traindata']
+
+class FeatureselectionUpdateView(LoginRequiredMixin,UpdateView):
+    """View to update a film"""
+    model=Featureselection 
+    # form_class=FeatureselectionForm
+    form_class=FeatureselectionForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # context['load_template'] = 'assds'
+        train_data_dict ={}
+        for t in Traindata.objects.all().values():
+            train_data_dict[t['file_id']]=t['column_names']
+        context['train_data_dict']=json.dumps(train_data_dict)
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super(FeatureselectionUpdateView, self).get_form_kwargs()
+        # if 'data' in kwargs: #or check if self.request.method = POST
+        #     if '_run_now' in kwargs['data']:
+        #         kwargs['run_now']=['on']
+        return kwargs
+    def form_valid(self, form):
+        # This method is called when valid form data has been POSTed.
+        # It should return an HttpResponse.
+        # form.send_email()
+        if '_run_now' in form.data:
+            form.instance.run_now=True   #     this is done so that,when user clicks 'save as draft' then run_now is kept as false
+        form.instance.experiment_status='NOT_STARTED'
+        return super().form_valid(form)
+    
+    # def get_success_url(self):
+    #     a=1
+    #     return a
+
+class FeatureselectionDeleteView(LoginRequiredMixin,FeatureselectionBaseView, DeleteView):
+    """View to delete a film"""
+    template_name='logistic_build/experiment_confirm_delete.html'
+    
+    def get_context_data(self, **kwargs) :
+        context=super().get_context_data(**kwargs)
+        context['name']=context['object'].name
+        return context
+
+
+class FeatureselectionFormView(LoginRequiredMixin,CreateView):
+    # model =Experiment
+    form_class=FeatureselectionForm
+    # fields= '__all__'
+    template_name = 'logistic_build/featureselection_form.html'
 
 class NotificationModelBuildBaseView(View):
     model = NotificationModelBuild
