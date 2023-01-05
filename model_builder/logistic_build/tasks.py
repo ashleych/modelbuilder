@@ -11,7 +11,7 @@ from .Logisticregression_spark import LogisticRegressionModel_spark
 from .Logisticregression_sklearn import LogisticRegressionModel_sklearn as lr_sk
 
 from .glr_spark import RegressionModel_spark
-from logistic_build.scripts import sklearn_multi_model_selection
+from logistic_build.scripts import sklearn_feature_selection
 from pathlib import Path
 from django.conf import settings
 
@@ -120,8 +120,9 @@ def run_glm_regression(experiment_id):
 def run_feature_selection(experiment_id):
         experiment = m.Featureselection.objects.get(experiment_id=experiment_id)
     
-        feature_selection_results = sklearn_multi_model_selection.FeatureSelection(traindata_path=experiment.traindata.train_path,**vars(experiment) )
-        model_subsets = feature_selection_results.models.subsets_
+        fs_results = sklearn_feature_selection.FeatureSelection(traindata_path=experiment.traindata.train_path,**vars(experiment) )
+        model_subsets = fs_results.models.subsets_
+        experiment.results=m.ResultsFeatureselection.objects.create(**fs_results.ResultsFeatureselection_internal.dict())
         experiment.experiment_status='DONE'
         experiment.run_end_time= timezone.now()
         experiment.run_now=False

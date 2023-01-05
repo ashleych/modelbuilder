@@ -62,4 +62,5 @@ urlpatterns = [
     path('featureselection/create/', views.FeatureselectionCreateView.as_view(), name='featureselection_create'),
     path('featureselection/<int:pk>/update/', views.FeatureselectionUpdateView.as_view(), name='featureselection_update'),
     path('featureselection/<int:pk>/delete/', views.FeatureselectionDeleteView.as_view(), name='featureselection_delete'),
+    path('resultsfeatureselection/<int:pk>/detail', views.ResultsFeatureselectionDetailView.as_view(), name='resultsfeatureselection_detail'),
 ]

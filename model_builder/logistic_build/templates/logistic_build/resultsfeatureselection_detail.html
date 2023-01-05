@@ -1,0 +1,111 @@
+{% extends 'logistic_build/index.html' %}
+
+{% block  list_view_content%}
+
+<div class="" style="width: 70%;">
+    <div class="col">
+        <h1 class="text-center">Feature Selection Tests model Details </h1>
+
+        <div class="d-flex justify-content-center">
+            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for label, value in resultsfeatureselection.get_fields  %}
+
+                    {% if not label == "created_by" %}
+                    
+                        <tr>
+                            <td>{{label | upper}}</td>
+                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
+                        </tr>
+                    
+                    {% endif %}
+                    {% endfor %}
+
+                    <tr>
+                        <td> CONSTANT FEATURES </td>
+                        <td>
+                            <ul class="list-inline list-pipe">
+                                    {% for f in  constant_features %} 
+                                    <li class="list-inline-item">{{ f }}</li>
+                                         {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td> QUASI CONSTANT FEATURES </td>
+                        <td>
+                            <ul class="list-inline list-pipe">
+                                    {% for f in  quasi_constant_features %} 
+                                    <li class="list-inline-item">{{ f }}</li>
+                                         {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td> CORRELATED FEATURES </td>
+                        <td>
+                            <ul class="list-inline list-pipe">
+                                    {% for f in  correlated_features %} 
+                                    <li class="list-inline-item">{{ f }}</li>
+                                         {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td> DUPLICATED FEATURES </td>
+                        <td>
+                            <ul class="list-inline list-pipe">
+                                    {% for f in  duplicated_features %} 
+                                    <li class="list-inline-item">{{ f }}</li>
+                                         {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td> NON NUMERIC COLUMNS </td>
+                        <td>
+                            <ul class="list-inline list-pipe">
+                                    {% for f in  non_numeric_columns %} 
+                                    <li class="list-inline-item">{{ f }}</li>
+                                         {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td> SHORTLISTED FEATURES </td>
+                        <td>
+                            <ul class="list-inline list-pipe">
+                                    {% for f in  non_numeric_columns %} 
+                                    <li class="list-inline-item">{{ f }}</li>
+                                         {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+
+        </div>
+<div>
+</div>
+        <div class="d-flex justify-content-center">
+            <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
+            {% comment %}
+
+  <a href="{% url 'variables' experiment_id=stationarity.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a>
+  {% endcomment %}
+        </div>
+        <div class="d-flex justify-content-center">
+        </div>
+    </div>
+        
+</div>
+
+{% endblock  %}
