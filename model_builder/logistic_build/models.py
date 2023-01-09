@@ -89,8 +89,6 @@ class Experiment(models.Model):
     experiment_status = models.CharField(max_length=20, choices=STATUS_TYPE, null=True, blank=True)
     traindata = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='input_train_data')
     do_create_data = models.BooleanField(default=True)
-    run_in_the_background = models.BooleanField(default=True)
-    enable_spark = models.BooleanField(default=True)
     output_data = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='output_data')
     previous_experiment = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
     run_now = models.BooleanField(default=False)
@@ -100,6 +98,8 @@ class Experiment(models.Model):
     created_by = models.ForeignKey(User,
                                    null=True, blank=True, on_delete=models.CASCADE)
     all_preceding_experiments = models.TextField(max_length=20000, blank=True, null=True)
+    run_in_the_background = models.BooleanField(default=False)
+    enable_spark = models.BooleanField(default=False)
 
     def _track_precedents(self):
         if self.previous_experiment:
@@ -361,7 +361,7 @@ class Classificationmodel(Experiment):
     test_split = models.FloatField(blank=True, null=True)
     feature_cols = models.TextField(max_length=20000, blank=True, null=True)
     ignored_columns = models.TextField(max_length=20000, blank=True, null=True)
-    cross_validation = models.BooleanField(default=False)
+    cross_validation = models.IntegerField(default=0, null=True, blank=True)
     results = models.ForeignKey(ResultsClassificationmodel, on_delete=models.CASCADE, null=True, blank=True)
 
     def get_absolute_url(self):
@@ -371,38 +371,37 @@ class Classificationmodel(Experiment):
             return reverse('classificationmodel_update', args=[str(self.experiment_id)])
 
     def save(self, *args, **kwargs):
-        # super(Classificationmodel, self).save(*args, **kwargs)
-        # self.slug = slugify(self.title)
-        print(f"self run now : {self.run_now}")
         if self._state.adding:
             self.experiment_type = 'classificationmodel'
             self.experiment_status = 'NOT_STARTED'
             super(Classificationmodel, self).save(*args, **kwargs)
 
-        else:
-            if self.run_now:
-                self.run_end_time = None
-                self.run_start_time = timezone.now()
-                self.results = None
-                # from .tasks import run_logistic_regression # this is done to avoid
-                import logistic_build.tasks as t
-                self.experiment_status = 'STARTED'
-                super(Classificationmodel, self).save(*args, **kwargs)
-                if self.run_in_the_background:
-                    async_task("logistic_build.tasks.run_logistic_regression", self.experiment_id, run_in_the_background=True)
-                    # logistic_results= t.run_logistic_regression(self.experiment_id,run_in_the_background=True) # to run in foreground, for checks
-                else:
-                    logistic_results = t.run_logistic_regression(self.experiment_id)
+        if self.run_now and self.traindata and self.label_col:
+            self.run_end_time = None
+            self.run_start_time = timezone.now()
+            self.results = None
+            # from .tasks import run_logistic_regression # this is done to avoid
+            import logistic_build.tasks as t
+            self.experiment_status = 'STARTED'
+            kwargs['force_insert'] = False
+            super(Classificationmodel, self).save(*args, **kwargs)
+            if self.run_in_the_background:
+                async_task("logistic_build.tasks.run_logistic_regression", self.experiment_id, run_in_the_background=True)
+                # logistic_results= t.run_logistic_regression(self.experiment_id,run_in_the_background=True) # to run in foreground, for checks
             else:
-                print("Experiment status :", self.experiment_status)
-                if self.experiment_status == 'DONE':
+                logistic_results = t.run_logistic_regression(self.experiment_id)
+        else:
+            print("Experiment status :", self.experiment_status)
+            if self.experiment_status == 'DONE':
+                kwargs['force_insert'] = False
+                super(Classificationmodel, self).save(*args, **kwargs)
+            else:
+                if self.experiment_status == 'NOT_STARTED':
+                    self.run_end_time = None
+                    self.run_start_time = timezone.now()
+                    self.results = None
+                    kwargs['force_insert'] = False
                     super(Classificationmodel, self).save(*args, **kwargs)
-                else:
-                    if self.experiment_status == 'NOT_STARTED':
-                        self.run_end_time = None
-                        self.run_start_time = timezone.now()
-                        self.results = None
-                        super(Classificationmodel, self).save(*args, **kwargs)
 
 
 class RegressionMetrics(models.Model):
@@ -538,10 +537,6 @@ class ResultsFeatureselection(models.Model):
                     setattr(self, attrib, json.dumps(value_))
                 else:
                     setattr(self, attrib, None)
-
-            # if self._state.adding:
-            #     self.experiment_type = 'featureselection'
-            #     self.experiment_status = 'NOT_STARTED'
         super(ResultsFeatureselection, self).save(*args, **kwargs)
 
     # def __str__(self):
@@ -550,12 +545,28 @@ class ResultsFeatureselection(models.Model):
     def get_fields(self):
         return [(field.verbose_name, field.value_from_object(self)) for field in self.__class__._meta.fields[1:]]
 
+class TopModelsManager():
+
+    def get_queryset(self):
+        return super().get_queryset()
 class TopModels(models.Model):
     selected_features = models.TextField(max_length=20000, blank=True, null=True)
     cv_scores = models.TextField(max_length=20000, blank=True, null=True)
     avg_score = models.FloatField(blank=True, null=True)
     rank = models.IntegerField(blank=True, null=True)
-    result = models.ForeignKey(ResultsFeatureselection, null=True, blank=True, on_delete=models.CASCADE)
+    results = models.ForeignKey(ResultsFeatureselection, null=True, blank=True, on_delete=models.CASCADE)
+    topmodels = TopModelsManager()
+
+    def save(self, *args, **kwargs):
+        string_attributes = ["selected_features", "cv_scores"]
+        for attrib in string_attributes:
+            value_ = getattr(self, attrib)
+            if type(value_) == list:
+                if value_:
+                    setattr(self, attrib, json.dumps(value_))
+                else:
+                    setattr(self, attrib, None)
+        super(TopModels, self).save(*args, **kwargs)
 
 class Featureselection(Experiment):
 

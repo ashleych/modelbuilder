@@ -1,111 +1,231 @@
-{% extends 'logistic_build/index.html' %}
-
-{% block  list_view_content%}
-
-<div class="" style="width: 70%;">
-    <div class="col">
-        <h1 class="text-center">Feature Selection Tests model Details </h1>
-
-        <div class="d-flex justify-content-center">
-            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
-                <thead>
-                    <tr>
-                        <th scope="col"></th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                    {% for label, value in resultsfeatureselection.get_fields  %}
-
-                    {% if not label == "created_by" %}
-                    
-                        <tr>
-                            <td>{{label | upper}}</td>
-                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
-                        </tr>
-                    
-                    {% endif %}
-                    {% endfor %}
-
-                    <tr>
-                        <td> CONSTANT FEATURES </td>
-                        <td>
-                            <ul class="list-inline list-pipe">
-                                    {% for f in  constant_features %} 
-                                    <li class="list-inline-item">{{ f }}</li>
-                                         {% endfor %}
-                            </ul>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> QUASI CONSTANT FEATURES </td>
-                        <td>
-                            <ul class="list-inline list-pipe">
-                                    {% for f in  quasi_constant_features %} 
-                                    <li class="list-inline-item">{{ f }}</li>
-                                         {% endfor %}
-                            </ul>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> CORRELATED FEATURES </td>
-                        <td>
-                            <ul class="list-inline list-pipe">
-                                    {% for f in  correlated_features %} 
-                                    <li class="list-inline-item">{{ f }}</li>
-                                         {% endfor %}
-                            </ul>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> DUPLICATED FEATURES </td>
-                        <td>
-                            <ul class="list-inline list-pipe">
-                                    {% for f in  duplicated_features %} 
-                                    <li class="list-inline-item">{{ f }}</li>
-                                         {% endfor %}
-                            </ul>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> NON NUMERIC COLUMNS </td>
-                        <td>
-                            <ul class="list-inline list-pipe">
-                                    {% for f in  non_numeric_columns %} 
-                                    <li class="list-inline-item">{{ f }}</li>
-                                         {% endfor %}
-                            </ul>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> SHORTLISTED FEATURES </td>
-                        <td>
-                            <ul class="list-inline list-pipe">
-                                    {% for f in  non_numeric_columns %} 
-                                    <li class="list-inline-item">{{ f }}</li>
-                                         {% endfor %}
-                            </ul>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+{% extends 'logistic_build/index.html' %} {% block list_view_content%}
+<div class="" style="width: 100%">
+  <div class="col">
+    <h1 class="text-center">Feature Selection Tests model Details</h1>
 
 
+    <div class="col-sm-12">
+      <h5 class="mb-3">Features Shortlisting</h5>
+      <hr />
+      <div class="accordion" id="accordionExample">
+        <div class="card">
+          <div class="card-header" id="headingOne">
+            <h5 class="mb-0">
+              <a
+                href="#!"
+                data-toggle="collapse"
+                data-target="#collapseOne"
+                aria-expanded="true"
+                aria-controls="collapseOne"
+                >Constant Features Removed</A
+              >
+            </h5>
+          </div>
+          <div
+            id="collapseOne"
+            class="card-body collapse show"
+            aria-labelledby="headingOne"
+            data-parent="#accordionExample"
+          >
+            <td>
+              <ul class="list-inline list-pipe">
+                {% for f in constant_features %}
+                <li class="list-inline-item">{{ f }}</li>
+                {% endfor %}
+              </ul>
+            </td>
+          </div>
         </div>
-<div>
-</div>
-        <div class="d-flex justify-content-center">
-            <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
-            {% comment %}
+        <div class="card">
+          <div class="card-header" id="headingTwo">
+            <h5 class="mb-0">
+              <a
+                href="#!"
+                class="collapsed"
+                data-toggle="collapse"
+                data-target="#collapseTwo"
+                aria-expanded="false"
+                aria-controls="collapseTwo"
+                >Quasi Constant Features</A
+              >
+            </h5>
+          </div>
+          <div
+            id="collapseTwo"
+            class="collapse card-body"
+            aria-labelledby="headingTwo"
+            data-parent="#accordionExample"
+          >
+            <ul class="list-inline list-pipe">
+              {% for feature in quasi_constant_features %}
+              <span class="badge badge-secondary"> {{ feature }}</span>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" id="headingThree">
+            <h5 class="mb-0">
+              <a
+                href="#!"
+                class="collapsed"
+                data-toggle="collapse"
+                data-target="#collapseThree"
+                aria-expanded="false"
+                aria-controls="collapseThree"
+                >Correlated Features Removed</A
+              >
+            </h5>
+          </div>
+          <div
+            id="collapseThree"
+            class="card-body collapse"
+            aria-labelledby="headingThree"
+            data-parent="#accordionExample"
+          >
+            <ul class="list-inline list-pipe">
+              {% for feature in correlated_features %}
+              <span class="badge badge-secondary"> {{ feature }}</span>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" id="headingFour">
+            <h5 class="mb-0">
+              <a
+                href="#!"
+                class="collapsed"
+                data-toggle="collapse"
+                data-target="#collapseFour"
+                aria-expanded="false"
+                aria-controls="collapseFour"
+                >Duplicated Features Removed</a
+              >
+            </h5>
+          </div>
+          <div
+            id="collapseFour"
+            class="card-body collapse"
+            aria-labelledby="headingFour"
+            data-parent="#accordionExample"
+          >
+            <ul class="list-inline list-pipe">
+              {% for feature in duplicated_features %}
+              <span class="badge badge-secondary"> {{ feature }}</span>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" id="headingFive">
+            <h5 class="mb-0">
+              <a
+                href="#!"
+                class="collapsed"
+                data-toggle="collapse"
+                data-target="#collapseFive"
+                aria-expanded="false"
+                aria-controls="collapseFive"
+              >
+                Non Numeric Columns Removed</a
+              >
+            </h5>
+          </div>
+          <div
+            id="collapseFive"
+            class="card-body collapse"
+            aria-labelledby="headingFive"
+            data-parent="#accordionExample"
+          >
+            <ul class="list-inline list-pipe">
+              {% for feature in non_numeric_columns %}
+              <span class="badge badge-secondary"> {{ feature }}</span>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header" id="headingSix">
+            <h5 class="mb-0">
+              <a
+                href="#!"
+                class="collapsed"
+                data-toggle="collapse"
+                data-target="#collapseSix"
+                aria-expanded="false"
+                aria-controls="collapseSix"
+              >
+                Shortlisted Features
+              </a>
+            </h5>
+          </div>
+          <div
+            id="collapseSix"
+            class="card-body collapse"
+            aria-labelledby="headingSix"
+            data-parent="#accordionExample"
+          >
+            <ul class="list-inline list-pipe">
+              {% for feature in shortlisted_features %}
+              <span class="badge badge-secondary"> {{ feature }}</span>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
 
-  <a href="{% url 'variables' experiment_id=stationarity.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a>
-  {% endcomment %}
-        </div>
-        <div class="d-flex justify-content-center">
-        </div>
+  
+ 
+  
+      </div>
     </div>
-        
-</div>
+    <div class="card">
+      <div class="card-header">
+        <h5>Top Models</h5>
+      </div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Features</th>
+              <th style="display: none">Cross Validation Scores</th>
+              <th>Avg CV Score</th>
+              <th>CV Scores</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for model in topmodels %}
+            <tr>
+              <th scope="row">{{model.rank}}</th>
+              <td>
+                {% for feature in model.selected_features %}<span
+                  class="badge badge-secondary"
+                >
+                  {{ feature }}</span
+                >
+                {% endfor %}
+              </td>
+              <td style="display: none">{{ model.cv_scores}}</td>
 
-{% endblock  %}
+              <td>
+                <span class="badge badge-success">{{ model.avg_score }}</span>
+              </td>
+
+              <td id="myChartNew">{{ model.id }} </td>
+              <td><a href="{% url 'classificationmodel_create' topmodel_id=model.id %}" class="label theme-bg2 text-white f-12">Run Experiment</a>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+         <div class="d-flex justify-content-center">
+        <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5"
+          >BACK</a
+        >
+  </div>
+  {% endblock %}
+</div>

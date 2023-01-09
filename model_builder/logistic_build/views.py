@@ -7,10 +7,8 @@ from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 from django_q.tasks import async_task
 from time import sleep
-from django.shortcuts import render
-
+import shortuuid
 # Create your views here.
-from django.http import HttpResponse
 from django.core.files.storage import default_storage
 import os
 import pandas as pd
@@ -33,8 +31,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic import RedirectView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse, reverse_lazy
-from .models import Traindata, Variables, Experiment, Stationarity, Manualvariableselection, Classificationmodel, ResultsClassificationmodel, NotificationModelBuild, RegressionMetrics, Regressionmodel, ResultsRegressionmodel, Featureselection, ResultsFeatureselection
-from .forms import ClassificationmodelForm, ExperimentForm, RegressionmodelForm, StationarityForm, ManualvariableselectionForm, ClassificationmodelForm, FeatureselectionForm
+from .models import Traindata, Variables, Experiment, Stationarity, Manualvariableselection, Classificationmodel, ResultsClassificationmodel, NotificationModelBuild, RegressionMetrics, Regressionmodel, ResultsRegressionmodel, Featureselection, ResultsFeatureselection,TopModels
+from .forms import  ExperimentForm, RegressionmodelForm, StationarityForm, ManualvariableselectionForm, ClassificationmodelForm, FeatureselectionForm
 from .Logisticregression_spark import plot_roc, plot_precision_recall
 from django.contrib.auth.mixins import LoginRequiredMixin
 # from view_breadcrumbs import ListBreadcrumbMixin,DetailBreadcrumbMixin
@@ -117,9 +115,6 @@ class ExperimentFormView(CreateView):
 
     def __init__(self, *args, **kwargs):
         super(ExperimentFormView, self).__init__(*args, **kwargs)
-    # @method_decorator(login_required)
-    # def dispatch(self, *args, **kwargs):
-    #     return super(PlaceEventFormView, self).dispatch(*args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super(ExperimentFormView, self).get_form_kwargs()
@@ -175,7 +170,7 @@ class ExperimentCreateView(ExperimentBaseView, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
-    # fields= ['name','traindata','do_kpss','do_adf','significance' ,'do_create_data']
+
 
 
 class ExperimentUpdateView(ExperimentBaseView, UpdateView):
@@ -389,10 +384,62 @@ class ClassificationmodelDetailView(LoginRequiredMixin, ClassificationmodelBaseV
         return context
 
 
-class ClassificationmodelCreateView(LoginRequiredMixin, ClassificationmodelBaseView, CreateView):
+class ClassificationmodelCreateView(LoginRequiredMixin, CreateView):
     """View to create a new film"""
-    fields = ['name', 'traindata']
+    # fields = ['name', 'traindata']
+    # model = Classificationmodel
+    model = Classificationmodel
+    form_class = ClassificationmodelForm
+    template_name='logistic_build/classificationmodel_form.html'
 
+    # @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        s=super(ClassificationmodelCreateView, self).dispatch(*args, **kwargs)
+        return s
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        return context
+
+# def post(self, **kwargs):
+    #     p=super(ClassificationmodelCreateView, self).post(**kwargs)
+    #     return p
+
+    def get_form_kwargs(self):
+        kwargs = super(ClassificationmodelCreateView, self).get_form_kwargs()
+        # kwargs['name'] = "test Name"
+        # kwargs['user'] = self.request.user
+        return kwargs
+
+    def get_initial(self):
+        initial = super(ClassificationmodelCreateView, self).get_initial()
+        topmodel_id= self.kwargs['topmodel_id']
+        tm=TopModels.objects.get(id=topmodel_id)
+        featureSelection_results = tm.results_id
+
+        feature_selection_object = Featureselection.objects.get(results_id=featureSelection_results)
+        initial['name'] = shortuuid.uuid()
+        initial['traindata'] =feature_selection_object.traindata
+        initial['feature_cols'] = tm.selected_features #this is featues in the top model
+        initial['label_col'] = feature_selection_object.label_col
+        initial['cross_validation']=feature_selection_object.cross_validation
+        initial['treat_missin']=feature_selection_object.treat_missing
+        initial['run_in_the_background']=False
+        initial['enable_spark']=False
+
+        return initial
+
+    # def form_valid(self, form):
+    #     return super().form_valid(form)
+    def form_valid(self, form):
+
+        if '_run_now' in form.data:
+            form.instance.run_now = True  # this is done so that,when user clicks 'save as draft' then run_now is kept as false
+        form.instance.experiment_status = 'NOT_STARTED'
+        form.instance.experiment_type = 'classificationmodel'
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 class ClassificationmodelUpdateView(LoginRequiredMixin, UpdateView):
     """View to update a film"""
@@ -410,24 +457,15 @@ class ClassificationmodelUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(ClassificationmodelUpdateView, self).get_form_kwargs()
-        # if 'data' in kwargs: #or check if self.request.method = POST
-        #     if '_run_now' in kwargs['data']:
-        #         kwargs['run_now']=['on']
+
         return kwargs
 
     def form_valid(self, form):
-        # This method is called when valid form data has been POSTed.
-        # It should return an HttpResponse.
-        # form.send_email()
+
         if '_run_now' in form.data:
             form.instance.run_now = True  # this is done so that,when user clicks 'save as draft' then run_now is kept as false
         form.instance.experiment_status = 'NOT_STARTED'
         return super().form_valid(form)
-
-    # def get_success_url(self):
-    #     a=1
-    #     return a
-
 
 class ClassificationmodelDeleteView(LoginRequiredMixin, ClassificationmodelBaseView, DeleteView):
     """View to delete a film"""
@@ -439,11 +477,11 @@ class ClassificationmodelDeleteView(LoginRequiredMixin, ClassificationmodelBaseV
         return context
 
 
-class ClassificationmodelFormView(LoginRequiredMixin, CreateView):
-    # model =Experiment
-    form_class = ClassificationmodelForm
-    # fields= '__all__'
-    template_name = 'logistic_build/classificationmodel_form.html'
+# class ClassificationmodelFormView(LoginRequiredMixin, CreateView):
+#     # model =Experiment
+#     form_class = ClassificationmodelForm
+#     # fields= '__all__'
+#     template_name = 'logistic_build/classificationmodel_form.html'
 
 
 def index_j(request):
@@ -612,15 +650,11 @@ class RegressionmodelUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(RegressionmodelUpdateView, self).get_form_kwargs()
-        # if 'data' in kwargs: #or check if self.request.method = POST
-        #     if '_run_now' in kwargs['data']:
-        #         kwargs['run_now']=['on']
+
         return kwargs
 
     def form_valid(self, form):
-        # This method is called when valid form data has been POSTed.
-        # It should return an HttpResponse.
-        # form.send_email()
+
         if '_run_now' in form.data:
             form.instance.run_now = True  # this is done so that,when user clicks 'save as draft' then run_now is kept as false
         form.instance.experiment_status = 'NOT_STARTED'
@@ -683,12 +717,10 @@ class FeatureselectionCreateView(LoginRequiredMixin, FeatureselectionBaseView, C
 class FeatureselectionUpdateView(LoginRequiredMixin, UpdateView):
     """View to update a film"""
     model = Featureselection
-    # form_class=FeatureselectionForm
     form_class = FeatureselectionForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # context['load_template'] = 'assds'
         train_data_dict = {}
         for t in Traindata.objects.all().values():
             train_data_dict[t['file_id']] = t['column_names']
@@ -697,23 +729,19 @@ class FeatureselectionUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(FeatureselectionUpdateView, self).get_form_kwargs()
-        # if 'data' in kwargs: #or check if self.request.method = POST
-        #     if '_run_now' in kwargs['data']:
-        #         kwargs['run_now']=['on']
+
         return kwargs
 
     def form_valid(self, form):
-        # This method is called when valid form data has been POSTed.
-        # It should return an HttpResponse.
-        # form.send_email()
+
         if '_run_now' in form.data:
             form.instance.run_now = True  # this is done so that,when user clicks 'save as draft' then run_now is kept as false
         form.instance.experiment_status = 'NOT_STARTED'
+        form.instance.created_by = self.request.user
+
         return super().form_valid(form)
 
-    # def get_success_url(self):
-    #     a=1
-    #     return a
+
 
 
 class FeatureselectionDeleteView(LoginRequiredMixin, FeatureselectionBaseView, DeleteView):
@@ -791,7 +819,14 @@ class ResultsFeatureselectionDetailView(LoginRequiredMixin, ResultsFeatureselect
             if value_:
                 s[attrib] = json.loads(value_)
             else:
-                s[attrib]=None
-        s['string_attributes']=string_attributes
+                s[attrib] = None
+        s['string_attributes'] = string_attributes
+        
+        # s['topmodels']
+        topmodels = list(TopModels.objects.filter(results=s["resultsfeatureselection"]).values())
+        for model in topmodels:
+            model['selected_features']= json.loads(model['selected_features'])
+            model['cv_scores']= json.loads(model['cv_scores'])
         # s['qconstant_features']= json.loads(s['resultsfeatureselection'].quasi_constant_features)
+        s['topmodels']=topmodels
         return s

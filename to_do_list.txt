@@ -23,3 +23,37 @@ http://rasbt.github.io/mlxtend/user_guide/feature_selection/ExhaustiveFeatureSel
 
 
 https://stackabuse.com/applying-wrapper-methods-in-python-for-feature-selection/
+
+
+https://github.com/rasbt/mlxtend/issues/41 --- subsets selection in mlextend 
+
+ https://django-datta-able.appseed-srv1.com/
+
+
+ https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
+
+
+ https://patsy.readthedocs.io/en/latest/overview.html statsmodels categorical variable encoding 
+
+
+ https://www.andrewvillazon.com/logistic-regression-python-statsmodels/ - stats model tutorial
+
+Setting threhsolds 
+ https://towardsdatascience.com/calculating-and-setting-thresholds-to-optimise-logistic-regression-performance-c77e6d112d7e#:~:text=The%20logistic%20regression%20assigns%20each,0.5%20is%20the%20default%20threshold.
+
+
+ https://django-volt-dashboard.appseed-srv1.com/dashboard.html#top
+
+
+ https://daniel.feldroy.com/posts/adding-django-form-instance-attributes - how to add user information to forms
+
+ /home/ashleyubuntu/model_builder/model_builder_venv/lib/python3.8/site-packages/django/test/client.py
+    def _encode_json(self, data, content_type):
+        """
+        Return encoded JSON if data is a dict, list, or tuple and content_type
+        is application/json.
+        """
+        should_encode = JSON_CONTENT_TYPE_RE.match(content_type) and isinstance(
+            data, (dict, list, tuple)
+        )
+        return json.dumps(data, cls=self.json_encoder) if should_encode else data

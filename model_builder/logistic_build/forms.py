@@ -54,13 +54,21 @@ class ClassificationmodelForm(forms.ModelForm):
    
     class Meta:
         model = Classificationmodel
-        # fields = '__all__'
         fields= [ "name", "traindata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","enable_spark","experiment_status"]
         widgets = {'experiment_status': forms.HiddenInput()}
+
+    def __init__(self, *args, **kwargs):
+        # self.request = kwargs.pop("request") # store value of request 
+        # print(self.request.user) 
+        
+        super().__init__(*args, **kwargs)
+        print('here')
+
     def clean(self):
         # form.cleaned_data['extra']
         cleaned_data = super().clean()
         return cleaned_data
+
 class RegressionmodelForm(forms.ModelForm):
    
     class Meta:

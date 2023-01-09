@@ -18,21 +18,7 @@ from sklearn.metrics import confusion_matrix, recall_score, precision_score, acc
 from sklearn.metrics import PrecisionRecallDisplay
 
 class LogisticRegressionModel_sklearn():
-    def __init__(self,
-                 seed: int = 2022,
-                 # filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv",
-                 filepath="/home/ashleyubuntu/model_builder/model_builder/logistic_build/subset_merged.csv",
-                 label_col='def_trig',
-                 exclude_features=None,
-                 prediction_cols=["M97"],
-                 train_percent=0.7,
-                 test_percent=0.3,
-                 normalise=False,
-                 inferSchema=True,
-                 stratify=True,
-                 logistic_threshold=0.5
-                 ):
-
+    def __init__(self, filepath, label_col, feature_cols, train_percent, test_percent, cross_validation, normalise=False, inferSchema=True, exclude_features=None,stratify=True, logistic_threshold=0.5, seed: int = 2022):
         # self.spark  = self.get_spark_session()
         self.train_result = ClassificationMetrics(type='train')  # initialise
         self.test_result = ClassificationMetrics(type='test')  # initialise
@@ -42,6 +28,7 @@ class LogisticRegressionModel_sklearn():
         self.logistic_threshold = logistic_threshold
         # self.features = self.input_data.columns
         self.exclude_features = exclude_features
+        self.feature_cols = feature_cols
         self.train_size = train_percent
         self.test_size = test_percent
         self.stratify = stratify
@@ -49,6 +36,7 @@ class LogisticRegressionModel_sklearn():
         self.remove_cols()
         if normalise:
             self.add_normaliser(label_col)
+        self.remove_non_numerical_features()
         self.train_split()
         # print("self.train.count " + str(self.train.count()))
         # print("self.test.count " + str(self.test.count()))
@@ -75,14 +63,30 @@ class LogisticRegressionModel_sklearn():
         return df
 
     def remove_cols(self,):
+        remove_cols = []
+        if self.feature_cols:
+            remove_cols =[ col for col in  list(self.input_data.columns) if col not in self.feature_cols]
         if self.exclude_features:
-            self.input_data = self.input_data.drop(*self.exclude_features)
+            remove_cols = list(set(remove_cols + self.exclude_features))
+
+        if remove_cols:
+            if self.label_col in remove_cols:
+                remove_cols.remove(self.label_col)
+            self.input_data.drop(remove_cols,axis=1,inplace=True)
+        # if self.exclude_features:
+        #     self.input_data = self.input_data.drop(*self.exclude_features)
+
+
 
     def get_feature_colums(self, label_col):
         cols = self.input_data.columns
         cols.remove(label_col)
         return cols
-
+    
+    def remove_non_numerical_features(self):
+        numerics = ['int16', 'int32', 'int64', 'float64', 'float32']
+        self.input_data= self.input_data.select_dtypes(include=numerics)
+    
     def train_split(self):
         self.train_features, self.test_features, self.train_labels, self.test_labels = train_test_split(self.input_data.drop(
             columns=self.label_col), self.input_data[self.label_col], train_size=self.train_size, test_size=self.test_size, stratify=self.input_data[self.label_col], random_state=1)
@@ -90,6 +94,7 @@ class LogisticRegressionModel_sklearn():
         self.overall_result.train_nrows=self.train_features.shape[0]
         self.overall_result.test_nrows=self.test_features.shape[0]
 
+        
     def build_pipeline(self):
         pass
 
@@ -154,22 +159,9 @@ class LogisticRegressionModel_sklearn():
 
         result.FPR, result.TPR, _ = roc_curve(
             y_ground_truth, y_pred_prob)
-        # from sklearn.datasets import make_classification
-        # X, y = make_classification(n_samples=500, random_state=0)
-        # from sklearn.linear_model import LogisticRegression
-        # model = LogisticRegression()
-        # model.fit(X, y)
-        # y_score = model.predict_proba(X)[:, 1]
-
-        # result.precision_plot_data, result.recall_plot_data, _ = precision_recall_curve(y, y_score)
 
         result.precision_plot_data, result.recall_plot_data, _ = precision_recall_curve(y_ground_truth, y_pred_prob, pos_label=1)
-        # df=pd.DataFrame({'precision':result.precision_plot_data, 'recall': result.recall_plot_data})
-        # df.to_csv('precision_recall.csv')
-        # PrecisionRecallDisplay.from_predictions(y_ground_truth, y_pred_prob)
-        # plt.show()
-        # fig.show()
-        # result.average_prevision_score = average_precision_score(y_ground_truth, y_pred_prob)
+
         result.areaUnderPR = round(
             auc(result.recall_plot_data, result.precision_plot_data), 2)
         fig = plot_precision_recall(result.recall_plot_data, result.precision_plot_data, result.areaUnderPR)
@@ -204,34 +196,7 @@ class LogisticRegressionModel_sklearn():
         self.result.predictions = self.lrModel.transform(data)
         # self.predictions.select(prediction_cols).show(10)/
 # %%
-# from sklearn.datasets import make_classification
-# import plotly.express as px
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.metrics import precision_recall_curve, auc
-# from sklearn.datasets import make_classification
-# X, y = make_classification(n_samples=500, random_state=0)
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.metrics import precision_recall_curve
-# model = LogisticRegression()
-# model.fit(X, y)
-# y_score = model.predict_proba(X)[:, 1]
 
-# precision,recall,t = precision_recall_curve(y, y_score)
-# fig = px.area(
-#     x=recall, y=precision,
-#     title=f'Precision-Recall Curve ',
-#     labels=dict(x='Recall', y='Precision'),
-#     width=700, height=500
-# )
-# fig.add_shape(
-#     type='line', line=dict(dash='dash'),
-#     x0=0, x1=1, y0=1, y1=0
-# )
-# fig.update_yaxes(scaleanchor="x", scaleratio=1)
-# fig.update_xaxes(constrain='domain')
-
-# fig.show()
-#%%
 
 if __name__ == '__main__':
     # if True:

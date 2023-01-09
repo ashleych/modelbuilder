@@ -8,3 +8,5 @@ __pycache__
 *.svg
 */static/*
 */login_assets/*
+model_builder/testdb.sqlite3
+model_builder/testdb.sqlite3-journal
