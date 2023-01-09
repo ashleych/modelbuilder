@@ -75,7 +75,7 @@ def run_logistic_regression(experiment_id):
     if experiment.enable_spark:
         logistic_results = LogisticRegressionModel_spark(filepath=experiment.traindata.train_path, label_cols=experiment.label_col,feature_cols=str_to_list['feature_cols'],exclude_features=str_to_list['ignored_columns'], train_percent=experiment.train_split, test_percent=experiment.test_split)
     else:
-        logistic_results = lr_sk(filepath=experiment.traindata.train_path, label_col=experiment.label_col, feature_cols=str_to_list['feature_cols'], exclude_features=str_to_list['ignored_columns'], train_percent=experiment.train_split, test_percent=experiment.test_split, cross_validation=experiment.cross_validation)
+        logistic_results = lr_sk(train_filepath=experiment.traindata.train_path, label_col=experiment.label_col, feature_cols=str_to_list['feature_cols'], exclude_features=str_to_list['ignored_columns'], train_percent=experiment.train_split, test_percent=experiment.test_split, cross_validation=experiment.cross_validation)
 
     if True:
         train_results = m.ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
@@ -83,6 +83,8 @@ def run_logistic_regression(experiment_id):
 
         experiment.results = m.ResultsClassificationmodel.objects.create(train_results=train_results, test_results=test_results, coefficients=json.dumps(logistic_results.overall_result.coefficients), train_nrows=logistic_results.overall_result.train_nrows, test_nrows=logistic_results.overall_result.test_nrows, features=json.dumps(logistic_results.overall_result.features))
         experiment.experiment_status = 'DONE'
+        if experiment.save_train_test_data:
+            experiment.create_train_test_data(train_features=logistic_results.train_features, test_features= logistic_results.test_features, train_labels= logistic_results.train_labels, test_labels= logistic_results.test_labels)
         experiment.run_end_time = timezone.now()
         experiment.run_now = False
         experiment.save(force_insert=False)

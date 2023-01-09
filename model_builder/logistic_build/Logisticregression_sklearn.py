@@ -17,27 +17,38 @@ from .logistic_results import OverallClassificationResults, auto_str, Classifica
 from sklearn.metrics import confusion_matrix, recall_score, precision_score, accuracy_score, f1_score, roc_auc_score, average_precision_score, auc, roc_curve
 from sklearn.metrics import PrecisionRecallDisplay
 
+
 class LogisticRegressionModel_sklearn():
-    def __init__(self, filepath, label_col, feature_cols, train_percent, test_percent, cross_validation, normalise=False, inferSchema=True, exclude_features=None,stratify=True, logistic_threshold=0.5, seed: int = 2022):
+    def __init__(self, train_filepath, label_col, feature_cols, train_percent, test_percent, cross_validation, test_filepath=None, normalise=False, inferSchema=True, exclude_features=None, stratify=True, logistic_threshold=0.5, seed: int = 2022):
         # self.spark  = self.get_spark_session()
         self.train_result = ClassificationMetrics(type='train')  # initialise
         self.test_result = ClassificationMetrics(type='test')  # initialise
         self.overall_result = OverallClassificationResults()  # initialise this
-        self.input_data = self.read_csv_data(filepath, inferSchema=inferSchema)
         self.label_col = label_col
         self.logistic_threshold = logistic_threshold
-        # self.features = self.input_data.columns
-        self.exclude_features = exclude_features
+        self.train_input_data = self.read_csv_data(train_filepath, inferSchema=inferSchema)
         self.feature_cols = feature_cols
-        self.train_size = train_percent
-        self.test_size = test_percent
-        self.stratify = stratify
+        if test_filepath:
+            self.test_input_data = self.read_csv_data(test_filepath)
+        else:
+            self.test_input_data = None
+
+        # self.features = self.train_input_data.columns
+        self.exclude_features = exclude_features
 
         self.remove_cols()
         if normalise:
             self.add_normaliser(label_col)
         self.remove_non_numerical_features()
-        self.train_split()
+        if not self.test_input_data:
+            self.train_size = train_percent
+            self.test_size = test_percent
+            self.stratify = stratify
+            self.train_split()
+        else:
+            self.create_train_test_features()
+        self.delete_inputs()
+        self.get_train_test_row_count()
         # print("self.train.count " + str(self.train.count()))
         # print("self.test.count " + str(self.test.count()))
         # self.
@@ -65,36 +76,46 @@ class LogisticRegressionModel_sklearn():
     def remove_cols(self,):
         remove_cols = []
         if self.feature_cols:
-            remove_cols =[ col for col in  list(self.input_data.columns) if col not in self.feature_cols]
+            remove_cols = [col for col in list(self.train_input_data.columns) if col not in self.feature_cols]
         if self.exclude_features:
             remove_cols = list(set(remove_cols + self.exclude_features))
 
         if remove_cols:
             if self.label_col in remove_cols:
                 remove_cols.remove(self.label_col)
-            self.input_data.drop(remove_cols,axis=1,inplace=True)
-        # if self.exclude_features:
-        #     self.input_data = self.input_data.drop(*self.exclude_features)
-
-
+            
+            self.train_input_data.drop(remove_cols, axis=1, inplace=True)
+            if self.test_input_data:
+                self.test_input_data.drop(remove_cols, axis=1, inplace=True)
 
     def get_feature_colums(self, label_col):
-        cols = self.input_data.columns
+        cols = self.train_input_data.columns
         cols.remove(label_col)
         return cols
-    
+
     def remove_non_numerical_features(self):
         numerics = ['int16', 'int32', 'int64', 'float64', 'float32']
-        self.input_data= self.input_data.select_dtypes(include=numerics)
-    
-    def train_split(self):
-        self.train_features, self.test_features, self.train_labels, self.test_labels = train_test_split(self.input_data.drop(
-            columns=self.label_col), self.input_data[self.label_col], train_size=self.train_size, test_size=self.test_size, stratify=self.input_data[self.label_col], random_state=1)
-        self.input_data = None
-        self.overall_result.train_nrows=self.train_features.shape[0]
-        self.overall_result.test_nrows=self.test_features.shape[0]
+        self.train_input_data = self.train_input_data.select_dtypes(include=numerics)
 
-        
+    def train_split(self):
+        self.train_features, self.test_features, self.train_labels, self.test_labels = train_test_split(self.train_input_data.drop(
+            columns=self.label_col), self.train_input_data[self.label_col], train_size=self.train_size, test_size=self.test_size, stratify=self.train_input_data[self.label_col], random_state=1)
+
+    def create_train_test_features(self):
+        self.train_features = self.train_input_data.drop(columns=self.label_col)
+        self.test_features = self.test_input_data.drop(columns=self.label_col)
+        self.train_labels = self.train_input_data[self.label_col]
+        self.test_labels = self.test_input_data[self.label_col]
+
+    def delete_inputs(self):
+        #  to release memory
+        self.train_input_data = None
+        self.test_input_data = None
+    
+    def get_train_test_row_count(self):
+        self.overall_result.train_nrows = self.train_features.shape[0]
+        self.overall_result.test_nrows = self.test_features.shape[0]
+
     def build_pipeline(self):
         pass
 
@@ -198,61 +219,3 @@ class LogisticRegressionModel_sklearn():
 # %%
 
 
-if __name__ == '__main__':
-    # if True:
-    fp = '/home/ashleyubuntu/model_builder/santander/santander_train_2k.csv'
-    fp = '/home/ashleyubuntu/model_builder/santander/santander_train_2k.csv'
-    fixed_features = ['num_med_var45_ult3', 'saldo_medio_var5_hace3']
-    fixed_features = None
-    label_col = 'TARGET'
-    lr_test = LogisticRegressionModel_sklearn(filepath=fp, label_col=label_col)
-    filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
-    import matplotlib.pyplot as plt
-    from sklearn.datasets import make_classification
-    from sklearn.metrics import PrecisionRecallDisplay
-    from sklearn.model_selection import train_test_split
-    from sklearn.linear_model import LogisticRegression
-    # X, y = make_classification(random_state=1)
-    import pandas as pd
-
-    fp = '/home/ashleyubuntu/model_builder/sample_classification.csv'
-    df = pd.read_csv(fp)
-    X = df.drop(columns='TARGET')
-    y = df['TARGET']
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, random_state=1)
-    clf = LogisticRegression()
-    clf.fit(X_train, y_train)
-
-    y_pred = clf.predict_proba(X_test)[:, 1]
-    PrecisionRecallDisplay.from_predictions(
-        y_test, y_pred)
-
-    plt.show()
-else:
-    pass
-    # fp = '/home/ashleyubuntu/model_builder/santander/santander_train_2k.csv'
-    # fixed_features = ['num_med_var45_ult3', 'saldo_medio_var5_hace3']
-    # label_col = 'TARGET'
-    # # lr_test = LogisticRegressionModel_sklearn(filepath=fp, label_col=label_col)
-    # filepath = "/home/ashleyubuntu/model_builder/Merged_Dataset.csv"
-    # import matplotlib.pyplot as plt
-    # from sklearn.datasets import make_classification
-    # from sklearn.metrics import PrecisionRecallDisplay
-    # from sklearn.model_selection import train_test_split
-    # from sklearn.linear_model import LogisticRegression
-    # X, y = make_classification(random_state=0)
-    # X_train, X_test, y_train, y_test = train_test_split(
-    #     X, y, random_state=0)
-    # clf = LogisticRegression()
-    # clf.fit(X_train, y_train)
-
-    # y_pred = clf.predict_proba(X_test)[:, 1]
-    # PrecisionRecallDisplay.from_predictions(
-    #     y_test, y_pred)
-
-    # plt.show()
-
-# %%
-
-# %%

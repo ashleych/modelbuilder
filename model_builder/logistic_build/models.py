@@ -88,6 +88,7 @@ class Experiment(models.Model):
     created_on_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     experiment_status = models.CharField(max_length=20, choices=STATUS_TYPE, null=True, blank=True)
     traindata = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='input_train_data')
+    testdata = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='input_test_data')
     do_create_data = models.BooleanField(default=True)
     output_data = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='output_data')
     previous_experiment = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
@@ -97,9 +98,11 @@ class Experiment(models.Model):
     run_end_time = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(User,
                                    null=True, blank=True, on_delete=models.CASCADE)
-    all_preceding_experiments = models.TextField(max_length=20000, blank=True, null=True)
-    run_in_the_background = models.BooleanField(default=False)
+    run_in_the_background = models.BooleanField(default=True)
     enable_spark = models.BooleanField(default=False)
+    all_preceding_experiments = models.TextField(max_length=20000, blank=True, null=True)
+    train_data_split = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='train_data_split_randomly')
+    test_data_split = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='test_data_split_randomly')
 
     def _track_precedents(self):
         if self.previous_experiment:
@@ -212,13 +215,13 @@ class Stationarity(Experiment):
         subset = input_data[json.loads(self.stationarity_passed)]
         out_dir_path = os.path.join(file_dir, "output")
         os.makedirs(out_dir_path, exist_ok=True)
-        file_name_as_stored_on_disk = os.path.join(out_dir_path, self.name+"_"+"Exp_id_" + str(self.experiment_id) + ".csv")
-        if os.path.exists(file_name_as_stored_on_disk):
-            os.remove(file_name_as_stored_on_disk)
-        print(file_name_as_stored_on_disk+" :    file_namesa as stpred ")
+        train_train_file_name_as_stored_on_disk = os.path.join(out_dir_path, self.name+"_"+"Exp_id_" + str(self.experiment_id) + ".csv")
+        if os.path.exists(train_train_file_name_as_stored_on_disk):
+            os.remove(train_train_file_name_as_stored_on_disk)
+
         # portfolio_data_input= default_storage.save(os.path.join("input","input.csv"), csv_file)
-        subset.to_csv(os.path.join(file_name_as_stored_on_disk))
-        macro_file_obj = Traindata.objects.create(train_path=file_name_as_stored_on_disk, train_data_name=self.name + "_output")
+        subset.to_csv(os.path.join(train_train_file_name_as_stored_on_disk))
+        macro_file_obj = Traindata.objects.create(train_path=train_train_file_name_as_stored_on_disk, train_data_name=self.name + "_output")
         self.output_data = macro_file_obj
 
     def save(self, *args, **kwargs):
@@ -298,11 +301,11 @@ class Manualvariableselection(Experiment):
                     input_data = pd.read_csv(self.traindata.train_path)
                     output_data = input_data[cols_to_keep]
 
-                    file_name_as_stored_on_disk = os.path.join("output", self.name+"_"+"Exp_id_" + str(self.experiment_id) + ".csv")
-                    if os.path.exists(file_name_as_stored_on_disk):
-                        os.remove(file_name_as_stored_on_disk)
-                    output_data.to_csv(file_name_as_stored_on_disk)
-                    macro_file_obj = Traindata.objects.create(train_path=file_name_as_stored_on_disk, train_data_name=self.name + "_output")
+                    train_train_file_name_as_stored_on_disk = os.path.join("output", self.name+"_"+"Exp_id_" + str(self.experiment_id) + ".csv")
+                    if os.path.exists(train_train_file_name_as_stored_on_disk):
+                        os.remove(train_train_file_name_as_stored_on_disk)
+                    output_data.to_csv(train_train_file_name_as_stored_on_disk)
+                    macro_file_obj = Traindata.objects.create(train_path=train_train_file_name_as_stored_on_disk, train_data_name=self.name + "_output")
                     self.output_data = macro_file_obj
                     self.experiment_status = "DONE"
         else:
@@ -363,6 +366,7 @@ class Classificationmodel(Experiment):
     ignored_columns = models.TextField(max_length=20000, blank=True, null=True)
     cross_validation = models.IntegerField(default=0, null=True, blank=True)
     results = models.ForeignKey(ResultsClassificationmodel, on_delete=models.CASCADE, null=True, blank=True)
+    save_train_test_data = models.BooleanField(null=True, blank=True, default=False)
 
     def get_absolute_url(self):
         if self.experiment_status and self.experiment_status != 'NOT_STARTED':
@@ -380,7 +384,7 @@ class Classificationmodel(Experiment):
             self.run_end_time = None
             self.run_start_time = timezone.now()
             self.results = None
-            # from .tasks import run_logistic_regression # this is done to avoid
+
             import logistic_build.tasks as t
             self.experiment_status = 'STARTED'
             kwargs['force_insert'] = False
@@ -402,6 +406,43 @@ class Classificationmodel(Experiment):
                     self.results = None
                     kwargs['force_insert'] = False
                     super(Classificationmodel, self).save(*args, **kwargs)
+
+    def create_train_test_data(self, train_features, test_features, train_labels, test_labels, **kwargs):
+        # import pdb; pdb.set_trace()
+        # The path exists check is needed cos the background task do_stationary_tests calls this function as well whose cwd is different
+        # ideally it should not be, but till the time the issue is fixed, one has to check if the path exists, else to go up one directory (whcih is where the tasks. py initiated workers have as directory)
+        # essentially its whether the path is model_builder or model_builder/model_builder
+        if os.path.exists(self.traindata.train_path):
+            print("path exists " + self.traindata.train_path)
+            file_path = self.traindata.train_path
+            file_dir = ""
+        else:
+            file_path = os.path.join(Path(settings.BASE_DIR).parent, self.traindata.train_path)
+            file_dir = os.path.join(Path(settings.BASE_DIR).parent)
+
+        out_dir_path = os.path.join(file_dir, "output")
+        os.makedirs(out_dir_path, exist_ok=True)
+
+        train_file_name_as_stored_on_disk = os.path.join(out_dir_path, self.name+"_"+"Exp_id_train_split" + str(self.experiment_id) + ".csv")
+
+        if os.path.exists(train_file_name_as_stored_on_disk):
+            os.remove(train_file_name_as_stored_on_disk)
+
+        test_file_name_as_stored_on_disk = os.path.join(out_dir_path, self.name+"_"+"Exp_id_test_split" + str(self.experiment_id) + ".csv")
+
+        if os.path.exists(test_file_name_as_stored_on_disk):
+            os.remove(test_file_name_as_stored_on_disk)
+        # Combining features and label columns
+        train_features[self.label_col] = train_labels
+        test_features[self.label_col] = test_labels
+
+        # writiing to disk
+        train_features.to_csv(train_file_name_as_stored_on_disk)
+        test_features.to_csv(test_file_name_as_stored_on_disk)
+
+        # creating traindata objects
+        self.train_data_split = Traindata.objects.create(train_path=train_file_name_as_stored_on_disk, train_data_name=self.name + "_train_split")
+        self.test_data_split = Traindata.objects.create(train_path=test_file_name_as_stored_on_disk, train_data_name=self.name + "_test_split")
 
 
 class RegressionMetrics(models.Model):
@@ -518,6 +559,7 @@ class ExperimentFilter(django_filters.FilterSet):
 #         return s
         # return super().get_queryset().filter(is_read=False)
 
+
 class ResultsFeatureselection(models.Model):
     constant_features = models.TextField(max_length=20000, blank=True, null=True)
     quasi_constant_features = models.TextField(max_length=20000, blank=True, null=True)
@@ -545,10 +587,13 @@ class ResultsFeatureselection(models.Model):
     def get_fields(self):
         return [(field.verbose_name, field.value_from_object(self)) for field in self.__class__._meta.fields[1:]]
 
+
 class TopModelsManager():
 
     def get_queryset(self):
         return super().get_queryset()
+
+
 class TopModels(models.Model):
     selected_features = models.TextField(max_length=20000, blank=True, null=True)
     cv_scores = models.TextField(max_length=20000, blank=True, null=True)
@@ -567,6 +612,7 @@ class TopModels(models.Model):
                 else:
                     setattr(self, attrib, None)
         super(TopModels, self).save(*args, **kwargs)
+
 
 class Featureselection(Experiment):
 

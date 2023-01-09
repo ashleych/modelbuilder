@@ -4,6 +4,16 @@ from django.forms import ModelForm
 from .models import Experiment,Stationarity,Manualvariableselection,Classificationmodel,Regressionmodel,Featureselection
 
 
+from django.forms import ModelForm, Textarea
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit, Layout,Row,Fieldset,Field,Div
+from crispy_forms.bootstrap import FormActions
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Fieldset, Submit
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
 class ExperimentForm(ModelForm):
     class Meta:
@@ -54,7 +64,7 @@ class ClassificationmodelForm(forms.ModelForm):
    
     class Meta:
         model = Classificationmodel
-        fields= [ "name", "traindata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","enable_spark","experiment_status"]
+        fields= [ "name", "traindata","testdata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","enable_spark","experiment_status"]
         widgets = {'experiment_status': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
@@ -81,10 +91,6 @@ class RegressionmodelForm(forms.ModelForm):
         cleaned_data = super().clean()
         return cleaned_data
 
-from django.forms import ModelForm, Textarea
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout,Row,Fieldset,Field,Div
-from crispy_forms.bootstrap import FormActions
 class FeatureselectionForm(forms.ModelForm):
     class Meta:
         model = Featureselection
@@ -121,42 +127,15 @@ class FeatureselectionForm(forms.ModelForm):
         
             )
         
-
-
-#    TASK_TYPE = [('regression','Regression'),('classification','Classification')]
-#     label_col=models.CharField(max_length=100,blank=True,null=True)
-#     feature_cols=models.TextField(max_length=20000,blank=True,null=True)
-#     train_split=models.FloatField(blank=True,null=True)
-#     test_split=models.FloatField(blank=True,null=True)
-#     ignored_features=models.TextField(max_length=20000,blank=True,null=True)
-#     fixed_features=models.TextField(max_length=20000,blank=True,null=True)
-#     cross_validation=models.BooleanField(default=False)
-#     results =models.ForeignKey(ResultsRegressionmodel, on_delete=models.CASCADE, null=True,blank=True)
-#     short_list_max_features=models.FloatField(blank=True,null=True)
-#     max_features=models.FloatField(blank=True,null=True)
-#     min_features=models.FloatField(blank=True,null=True)
-#     short_list_max_features=models.FloatField(blank=True,null=True)
-#     regression_or_classification=models.CharField(max_length=20,choices=TASK_TYPE,default='regression')
-#     remove_constant_features=models.BooleanField(default=False,null=True,blank=True)
-#     remove_quasi_constant_features=models.BooleanField(default=False,null=True,blank=True)
-#     variance_threshold=models.BooleanField(default=False,null=True,blank=True) #for quasi constant check
-#     correlation_check =models.BooleanField(default=False,null=True,blank=True)
-#     correlation_threshold=models.FloatField(blank=True,null=True)
-#     treat_missing = models.BooleanField(default=False,null=True,blank=True)
-#     variables_selected=  models.BooleanField(default=False,null=True,blank=True)
-#     do_exhaustive_search = models.BooleanField(default=False,null=True,blank=True)
     def clean(self):
         # form.cleaned_data['extra']
         cleaned_data = super().clean()
         return cleaned_data
         
-
     def form_valid(self, form, *args, **kwargs):
         # user = form.cleaned_data.get('user')
         # self.log_id = User.objects.get(username=user).select_related('log').last().id
         return super().form_valid(form, *args, **kwargs) 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, Submit
 
 class ExampleForm(forms.Form):
     like_website = forms.TypedChoiceField(
@@ -205,9 +184,6 @@ class ExampleForm(forms.Form):
         )
 
 
-from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
 
 
 class LoginForm(forms.Form):
