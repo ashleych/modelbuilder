@@ -21,6 +21,7 @@ import glob
 import datatable as dt
 
 
+
 class Traindata(models.Model):
     file_id = models.AutoField(primary_key=True)
     train_data_name = models.CharField(max_length=100, null=True, blank=True)
@@ -98,11 +99,12 @@ class Experiment(models.Model):
     run_end_time = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(User,
                                    null=True, blank=True, on_delete=models.CASCADE)
-    run_in_the_background = models.BooleanField(default=True)
+    run_in_the_background = models.BooleanField(default=False)
     enable_spark = models.BooleanField(default=False)
     all_preceding_experiments = models.TextField(max_length=20000, blank=True, null=True)
     train_data_split = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='train_data_split_randomly')
     test_data_split = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='test_data_split_randomly')
+    test_flag_new = models.BooleanField(default=False, null = True, blank=True, editable=False)
 
     def _track_precedents(self):
         if self.previous_experiment:
@@ -358,11 +360,11 @@ class ResultsClassificationmodel(models.Model):
 
 
 class Classificationmodel(Experiment):
-    label_col = models.CharField(max_length=100, blank=True, null=True)
+    label_col = models.CharField(max_length=25)
     feature_cols = models.TextField(max_length=20000, blank=True, null=True)
     train_split = models.FloatField(blank=True, null=True)
     test_split = models.FloatField(blank=True, null=True)
-    feature_cols = models.TextField(max_length=20000, blank=True, null=True)
+    feature_cols = models.TextField(max_length=20000)
     ignored_columns = models.TextField(max_length=20000, blank=True, null=True)
     cross_validation = models.IntegerField(default=0, null=True, blank=True)
     results = models.ForeignKey(ResultsClassificationmodel, on_delete=models.CASCADE, null=True, blank=True)
@@ -390,7 +392,10 @@ class Classificationmodel(Experiment):
             kwargs['force_insert'] = False
             super(Classificationmodel, self).save(*args, **kwargs)
             if self.run_in_the_background:
-                async_task("logistic_build.tasks.run_logistic_regression", self.experiment_id, run_in_the_background=True)
+                from django.db import connection
+                db_name = connection.settings_dict['NAME']
+                print('dbname from save', db_name )
+                async_task("logistic_build.tasks.run_logistic_regression", self.experiment_id,sync=True )
                 # logistic_results= t.run_logistic_regression(self.experiment_id,run_in_the_background=True) # to run in foreground, for checks
             else:
                 logistic_results = t.run_logistic_regression(self.experiment_id)

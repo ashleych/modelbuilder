@@ -44,6 +44,8 @@ urlpatterns = [
     path('classificationmodel/<int:pk>/detail', views.ClassificationmodelDetailView.as_view(), name='classificationmodel_detail'),
     # path('classificationmodel/create/', views.ClassificationmodelCreateView.as_view(), name='classificationmodel_create'),
     path('classificationmodel/<int:topmodel_id>/create/', views.ClassificationmodelCreateView.as_view(), name='classificationmodel_create'),
+    path('classificationmodel/create/', views.ClassificationmodelCreateView.as_view(), name='classificationmodel_create_scratch'),
+
     path('classificationmodel/<int:pk>/update/', views.ClassificationmodelUpdateView.as_view(), name='classificationmodel_update'),
     path('classificationmodel/<int:pk>/delete/', views.ClassificationmodelDeleteView.as_view(), name='classificationmodel_delete'),
     path('index_j/', views.index_j, name='index_j'),

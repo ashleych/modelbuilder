@@ -59,24 +59,39 @@ class ManualvariableselectionForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
+import json
+import ast
 class ClassificationmodelForm(forms.ModelForm):
-   
+    experiment_type = forms.CharField(disabled=True,initial='Classification Model')
+    # = forms.MultipleChoiceField()
     class Meta:
         model = Classificationmodel
-        fields= [ "name", "traindata","testdata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","enable_spark","experiment_status"]
-        widgets = {'experiment_status': forms.HiddenInput()}
+        fields= [ "name", "traindata","testdata","do_create_data", "experiment_type","previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols","ignored_columns", "cross_validation","enable_spark","experiment_status"]
+        widgets = {'experiment_status': forms.HiddenInput(),
+        "feature_cols": forms.SelectMultiple()}
+        # forms.CharField(required=False, widget=forms.SelectMultiple)
 
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['train_split'].widget.attrs['min'] = 0
+        self.fields['train_split'].widget.attrs['max'] = 1
         # self.request = kwargs.pop("request") # store value of request 
         # print(self.request.user) 
-        
-        super().__init__(*args, **kwargs)
-        print('here')
+    def clean_experiment_type(self):
+        return 'classificationmodel'
 
     def clean(self):
         # form.cleaned_data['extra']
         cleaned_data = super().clean()
+        cleaned_data['experiment_type']='classificationmodel'
+        if not cleaned_data['train_split'] or not cleaned_data['test_split']:
+            if not cleaned_data['testdata']:
+                raise forms.ValidationError("You need to enter train and test split or provide a test data set")
+        if not float(cleaned_data['train_split']) + float(cleaned_data['test_split']) == 1:
+            raise forms.ValidationError("Train and test splits need to add up to 1")
+        cleaned_data['feature_cols']= json.dumps(ast.literal_eval(cleaned_data['feature_cols']))
+        # if self._errors and 'title' in self._errors:
+        # cleaned_data['experiment_type']='newclassificationmodel'
         return cleaned_data
 
 class RegressionmodelForm(forms.ModelForm):

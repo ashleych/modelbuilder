@@ -34,11 +34,13 @@
                     
                     {% endif %}
                     {% if label == "results" %}
+                    {% if value %}
                     <tr>
                         <td>{{label | upper}}</td>
                         <td style="word-break:break-all;style="width: 50%"">            <a href="{% url 'resultsclassificationmodel_detail' pk=value %}" >{{ value }} </a></td>
                     </tr>
 
+                    {% endif %}
                     {% endif %}
                     {% endfor %}
                         

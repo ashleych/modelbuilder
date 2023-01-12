@@ -1,7 +1,7 @@
 from django.utils.functional import cached_property
 from django.http import JsonResponse
-from .forms import LoginForm, SignUpForm
 from django.forms.utils import ErrorList
+from .forms import LoginForm, SignUpForm
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
@@ -400,6 +400,10 @@ class ClassificationmodelCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
 
         context = super().get_context_data(**kwargs)
+        train_data_dict = {}
+        for t in Traindata.objects.all().values():
+            train_data_dict[t['file_id']] = t['column_names']
+        context['train_data_dict'] = json.dumps(train_data_dict)
         return context
 
 # def post(self, **kwargs):
@@ -414,19 +418,20 @@ class ClassificationmodelCreateView(LoginRequiredMixin, CreateView):
 
     def get_initial(self):
         initial = super(ClassificationmodelCreateView, self).get_initial()
-        topmodel_id= self.kwargs['topmodel_id']
-        tm=TopModels.objects.get(id=topmodel_id)
-        featureSelection_results = tm.results_id
+        if 'topmodel_id' in self.kwargs:
+            topmodel_id= self.kwargs['topmodel_id']
+            tm=TopModels.objects.get(id=topmodel_id)
+            featureSelection_results = tm.results_id
 
-        feature_selection_object = Featureselection.objects.get(results_id=featureSelection_results)
-        initial['name'] = shortuuid.uuid()
-        initial['traindata'] =feature_selection_object.traindata
-        initial['feature_cols'] = tm.selected_features #this is featues in the top model
-        initial['label_col'] = feature_selection_object.label_col
-        initial['cross_validation']=feature_selection_object.cross_validation
-        initial['treat_missin']=feature_selection_object.treat_missing
-        initial['run_in_the_background']=False
-        initial['enable_spark']=False
+            feature_selection_object = Featureselection.objects.get(results_id=featureSelection_results)
+            initial['name'] = shortuuid.uuid()
+            initial['traindata'] =feature_selection_object.traindata
+            initial['feature_cols'] = tm.selected_features #this is featues in the top model
+            initial['label_col'] = feature_selection_object.label_col
+            initial['cross_validation']=feature_selection_object.cross_validation
+            initial['treat_missin']=feature_selection_object.treat_missing
+            initial['run_in_the_background']=False
+            initial['enable_spark']=False
 
         return initial
 

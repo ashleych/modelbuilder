@@ -104,9 +104,6 @@ class Classification(TestCase):
         self.assertEqual(new_exp.run_now, True)
 
 
-
-
-
 @pytest.mark.django_db()
 def test_creating_classification_model_with_feature_cols():
     """Test function using fixture of baked model."""
@@ -351,7 +348,7 @@ def test_example_form(client, django_user_model):
     s.save()
     fs_saved = Featureselection.objects.get(pk=s.experiment_id)
     assert len(json.loads(fs_saved.results.shortlisted_features)) == 2, "Two variables werent short listed"
-    
+
     topModel = TopModels.objects.filter(results=fs_saved.results).values()[0]
     topModel_id = topModel['id']
 
@@ -363,12 +360,13 @@ def test_example_form(client, django_user_model):
     post_data = response.context['form'].initial
     # form.is_valid()
     response.context['form'].is_valid()
-   
+
     # post_data['_run_now'] = True  # to mimic when the user clicks the Submit button which is named _run_now, as opposed to the save as draft button
     response = client.post(url, data=data)
 
     assert response.status_code == 200
     # assert form.is_valid() is True
+
 
 @pytest.mark.django_db()
 def test_classification_model_form(client, django_user_model):
@@ -388,11 +386,13 @@ def test_classification_model_form(client, django_user_model):
         "cross_validation": 5,
         "experiment_status": '',
         "_run_now": 'SUBMIT'}
-    form=ClassificationmodelForm(data)
+    form = ClassificationmodelForm(data)
     # form.form_valid()
     # is_valid=form.is_valid()
     form.save()
     # assert is_valid
+
+
 @pytest.mark.django_db()
 def test_sample_post_classificationmodel(client, django_user_model):
     fp = os.path.join(TESTING_DIRECTORY, 'santander_train_2k.csv')
@@ -427,9 +427,9 @@ def test_sample_post_classificationmodel(client, django_user_model):
     response = client.post(url, data=post_data)
     assert response.status_code == 200
 
-# @pytest.fixture()
-@pytest.mark.parametrize('save_train_test_data', [True,False])
-def test_sample_post_classificationmodel(client, django_user_model,save_train_test_data):
+
+@pytest.mark.parametrize('save_train_test_data', [True, False])
+def test_sample_post_classificationmodel(client, django_user_model, save_train_test_data):
     fp = os.path.join(TESTING_DIRECTORY, 'santander_train_2k.csv')
     santander_data = Traindata.objects.create(train_path=fp, train_data_name='santander')
     username = "Siri"
@@ -439,28 +439,55 @@ def test_sample_post_classificationmodel(client, django_user_model,save_train_te
     feature_cols = ['var3', 'var15', 'imp_ent_var16_ult1', 'imp_op_var39_comer_ult1']
 
     c = Classificationmodel.objects.create(traindata=santander_data, name='new', feature_cols=json.dumps(feature_cols), experiment_type='classificationmodel',
-                                           label_col=label_col, run_now=False, run_in_the_background=False, train_split=0.7, test_split=0.3,save_train_test_data=save_train_test_data)
+                                           label_col=label_col, run_now=False, run_in_the_background=False, train_split=0.7, test_split=0.3, save_train_test_data=save_train_test_data)
     c.run_now = True
     c.save()
     assert isinstance(c, Classificationmodel)
-    updated_experiment=Classificationmodel.objects.get(pk=c.experiment_id)
+    updated_experiment = Classificationmodel.objects.get(pk=c.experiment_id)
     assert isinstance(updated_experiment, Classificationmodel)
     assert updated_experiment.results, "results not populated"
     assert len(json.loads(json.loads(updated_experiment.results.coefficients))) == len(feature_cols)
-    assert updated_experiment.results.train_nrows ==1400
+    assert updated_experiment.results.train_nrows == 1400
     assert updated_experiment.results.test_nrows == 600
-    assert updated_experiment.results.train_results.areaUnderROC >0
+    assert updated_experiment.results.train_results.areaUnderROC > 0
     assert updated_experiment.results.train_results.precision is not None
-    assert len(json.loads(updated_experiment.results.train_results.precision_plot_data)) >0
+    assert len(json.loads(updated_experiment.results.train_results.precision_plot_data)) > 0
 
-
+import time
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize('save_train_test_data', [True, False])
+@pytest.mark.parametrize('run_in_the_background', [True, False])
+def test_view_classificationmodel(client, django_user_model, save_train_test_data, run_in_the_background):
+    fp = os.path.join(TESTING_DIRECTORY, 'santander_train_2k.csv')
+    santander_data = Traindata.objects.create(train_path=fp, train_data_name='santander')
+    username = "Siri"
+    password = "siri"
+    user = django_user_model.objects.create_user(username=username, password=password)
+    label_col = "TARGET"
+    feature_cols = ['var3', 'var15', 'imp_ent_var16_ult1', 'imp_op_var39_comer_ult1']
+    print(run_in_the_background)
+    c = Classificationmodel.objects.create(traindata=santander_data, name='new', feature_cols=json.dumps(feature_cols), experiment_type='classificationmodel', label_col=label_col, run_now=True, run_in_the_background = run_in_the_background, created_by=user, train_split=0.7, test_split=0.3, enable_spark=False, save_train_test_data=save_train_test_data)
+    if run_in_the_background:
+        assert c.results is None,"results not populated"
+        time.sleep(10)
+    assert isinstance(c, Classificationmodel)
+    # assumption that the task would compete in 10 seconds
+    refreshed_class_model= Classificationmodel.objects.get(pk=c.experiment_id)
+    assert refreshed_class_model.results, "results still not done, try increasing the sleep time in the tests if needed"
+    client.login(username=username, password=password)
+    url = reverse('classificationmodel_detail', kwargs={"pk": c.experiment_id})
+    response = client.get(url)
+    assert response.status_code == 200
+    with open("yourhtmlfile_mvs.html", "wb") as file:
+        file.write(response.content)
 
 
 @pytest.mark.django_db()
 # @pytest.mark.parametrize('enable_spark', [False])
 # @pytest.mark.parametrize('train_data_path', ['/home/ashleyubuntu/model_builder/sample_classification.csv'])
 # @pytest.mark.parametrize('train_data_path', ['/home/ashleyubuntu/model_builder/sample_classification.csv'])
-
 def test_model_classificationmodel(test_sample_post_classificationmodel):
-    c=test_sample_post_classificationmodel()
+    c = test_sample_post_classificationmodel()
 
+
+# @pytest.fixture()

@@ -29,22 +29,45 @@
 
 {% block javascripts %}
     <script type="text/javascript">
+        function buildDropDowns(options_list) {
+
+    var $id_feature_cols_select = $("#id_feature_cols");
+    $id_feature_cols_select.children().remove();
+
+    $(options_list).each(function(key, value) {   
+        $('#id_feature_cols').append($("<option></option>")
+                    .attr("value",value)
+                    .text(value)); 
+    });
+
+}
+
+
+window.addEventListener('load', function() {
+    var sizes = ["XXL", "XL", "L", "M", "S", "XS"];
+// train data dict is sent by django into the context varaible in the templates
+    train_data_initial =$('#id_traindata').val(); //if value is prepopulated, usually would happen in the case previus exp is chosen, else will be blank
+    if(train_data_dict[train_data_initial]){
         
+        
+        options_list= JSON.parse(train_data_dict[train_data_initial])
+        buildDropDowns(options_list);
+        console.log(JSON.parse(train_data_dict[train_data_initial]));
+    }
 
         
-        window.addEventListener('load', function() {
+        $("#id_traindata").change(function() {
+            console.log("changed values");
+            train_data_initial =$('#id_traindata').val();
+            if(train_data_dict[train_data_initial]){
+                train_data_chosen_by_user =$('#id_traindata').val();
 
-                            v=$('#id_traindata').val();
-                            console.log(v);
-                            $('#id_feature_cols').html(train_data_dict[v]);
+                    options_list= JSON.parse(train_data_dict[train_data_chosen_by_user])
 
-            $( "#id_traindata" ).change(function() {
-                console.log("changed values");
-                v=$('#id_traindata').val();
-                console.log(train_data_dict[v]);
-                $('#id_feature_cols').html(train_data_dict[v]);
+                buildDropDowns(options_list);
+            }
+                });
             });
-        })
     </script>
         {% endblock %}
     

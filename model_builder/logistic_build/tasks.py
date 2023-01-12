@@ -53,9 +53,16 @@ def do_stationarity_test_django_q(experiment_id):
 
 
 def run_logistic_regression(experiment_id):
+    print(experiment_id)
 
+    print("Count of objects is :", m.Classificationmodel.objects.all().count())
+
+    from django.db import connection
+    db_name = connection.settings_dict['NAME']
+    print('dbname', db_name )
     experiment = m.Classificationmodel.objects.get(experiment_id=experiment_id)
-    print(settings.BASE_DIR)
+
+
     if os.path.exists(experiment.traindata.train_path):
         file_path = experiment.traindata.train_path
     else:
