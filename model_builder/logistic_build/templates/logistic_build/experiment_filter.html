@@ -18,7 +18,7 @@
                     <table class="table table-hover">
                         <tbody>
 
-                {% for experiment in experiment_list %}
+                {% for experiment in experiment_list.qs %}
             
                 <tr class="unread">
                     {% if experiment.experiment_type != 'input' %}
@@ -87,7 +87,7 @@
 
                         <form id='filter_form' method="get">
                             <!-- {{ filter.form.as_p }} -->
-                            {{ filter.form | crispy }}
+                            {{ experiment_list.form | crispy }}
                             <input type="submit" />
                         </form>
 

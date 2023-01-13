@@ -18,11 +18,17 @@
                             <div class="row align-items-center">
                                 <div class="col-md-12">
                                     <div class="page-header-title">
-                                        <h5 class="m-b-10">Sample Page</h5>
+                                        {% if bread_crumb %}
+                                        <h5 class="m-b-10"></h5>
+                                        {% endif %}
                                     </div>
                                     <ul class="breadcrumb">
                                         <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
-                                        <li class="breadcrumb-item"><a href="javascript:">Sample Page</a></li>
+                                        {% if bread_crumb %}
+                                        {% for crumb in bread_crumb %}
+                                        <li class="breadcrumb-item"><a href="javascript:">{{ crumb}} </a></li>
+                                        {% endfor %}
+                                        {% endif %}
                                     </ul>
                                 </div>
                             </div>

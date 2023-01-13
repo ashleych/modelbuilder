@@ -43,3 +43,30 @@
 }
 
 
+/* ul { padding-left:20px; list-style:none; }
+li { margin-bottom:10px; }
+li:before {    
+    content: 'assd';
+    margin:0 5px 0 -15px;
+} */
+/* li:before {    
+    font-family: 'FontAwesome';
+    content: '\f067';
+    margin:0 5px 0 -15px;
+} */
+
+.addlink {
+    padding-left: 16px;
+    background: url(icon-addlink.svg) 0 1px no-repeat;
+}
+
+
+.cell_wrap span{
+  /* border: 1px solid green;
+  border-radius:15px;
+  padding-right: 5px;
+  width:13px;
+  cursor:pointer; */
+  display: inline-block;
+  /* white-space: normal; */
+}

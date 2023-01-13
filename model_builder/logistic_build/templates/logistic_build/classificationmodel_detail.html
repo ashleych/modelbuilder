@@ -1,66 +1,195 @@
 {% extends 'logistic_build/index.html' %}
 {% block  list_view_content%}
+{% load logistic_build_tags %}
+<div>
 
+</div>
+<div class="col-sm-12">
+    <div class="row">
+    <div class="col-xl-8 col-md-6">
+        <div class="card Recent-Users">
+            <div class="card-header">
+                <h5>Experiments List New</h5>
+            </div>
+            <div class="card-block px-0 py-3">
+                <div class="col">
+                    <h1 class="text-center">Classification model Details </h1>
+                    {% include 'logistic_build/includes/previous_experiments.html' %}
 
-<div class="" style="width: 70%;">
-    <div class="col">
-        <h1 class="text-center">Classification model Details </h1>
-        {% include 'logistic_build/includes/previous_experiments.html' %}
+<div class="col-xl-8 col-md-12 m-b-30">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link" id="about-tab" data-toggle="tab" href="#about" role="tab"
+                aria-controls="about" aria-selected="true">About</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active show" id="input-tab" data-toggle="tab"
+                href="#input" role="tab" aria-controls="input" aria-selected="false"> Input Data
+                </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="rundetails-tab" data-toggle="tab" href="#rundetails"
+                role="tab" aria-controls="rundetails" aria-selected="false">Parameters</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="results-tab" data-toggle="tab" href="#results"
+                role="tab" aria-controls="results" aria-selected="false">Results</a>
+        </li>
 
-        <div class="d-flex justify-content-center">
-            <table class="table-striped mt-5 stationarity_table" style="width: 100%; table-layout: fixed;    max-width: 600px;">
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
+            <table class="table table-hover">
                 <thead>
-                    <tr>
-                        <th scope="col"></th>
-                        <th scope="col"></th>
-                    </tr>
+
                 </thead>
                 <tbody>
-
-                    {% for label, value in classificationmodel.get_fields  %}
-                    {% if not label == "colnames" and not label == "created by" %}
-                        <tr>
-                            <td>{{label | upper}}</td>
-                            <td style="word-break:break-all;style="width: 50%"">{{value}}</td>
-                        </tr>
-                    {% endif %}
-
-                    {% if label == "created by" %}
-                    
+                    {% for label,value in classificationmodel.get_fields_by_type_about %}
                     <tr>
-                        <td>{{label | upper}}</td>
-                        <td style="word-break:break-all;style="width: 50%"">{{created_by}}</td>
+                        <td>
+                            <h6 class="m-0"> {{ label | upper }} </h6>
+                        </td>
+                        <td>
+                            <h6 class="m-0"> {{ value | upper }} </h6>
+                        </td>
                     </tr>
-                    
-                    {% endif %}
-                    {% if label == "results" %}
-                    {% if value %}
-                    <tr>
-                        <td>{{label | upper}}</td>
-                        <td style="word-break:break-all;style="width: 50%"">            <a href="{% url 'resultsclassificationmodel_detail' pk=value %}" >{{ value }} </a></td>
-                    </tr>
-
-                    {% endif %}
-                    {% endif %}
                     {% endfor %}
+                    <tr>
+                    </tbody>
+                </table>
+                
+            </div>
+            <div class="tab-pane fade active show" id="input" role="tabpanel"
+            aria-labelledby="input-tab">
+            <div>
+
+                    <table class="table table-hover" style="word-wrap:break-word !important;table-layout: fixed;width: 510px; ">
+                        <thead>
+                            
+                </thead>
+                <tbody>
+                    {% for label,value in classificationmodel.get_fields_by_type_model_parameters %}
+                    <tr class="cell_wrap">
+                        <td>
+                            <h6 class="m-0"> {{ label | upper }} </h6>
+                        </td>
+                        <td style="word-break:break-all;white-space: normal;">
+                            {% if label == 'feature cols' %}
+                            {% for feature in feature_cols %}
+                            <span class="badge badge-secondary"> {{ feature }}</span>
+                            {% endfor %}
+                            {% else %}
+                            <h6 class="m-0"> {{ value | upper }} </h6>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                    </tbody>
+                </table>
+            </div>
+            </div>
+            <div class="tab-pane fade" id="rundetails" role="tabpanel"
+            aria-labelledby="rundetails-tab">
+                <table class="table table-hover">
+                    <thead>
                         
+                    </thead>
+                <tbody>
+                    {% for label,value in classificationmodel.get_fields_by_type_run_details %}
+                    <tr>
+                        <td>
+                            <h6 class="m-0"> {{ label | upper }} </h6>
+                        </td>
+                        <td>
+                            <h6 class="m-0"> {{ value | upper }} </h6>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                <tr>
                 </tbody>
             </table>
-
-
         </div>
+        <div class="tab-pane fade" id="results" role="tabpanel"
+                aria-labelledby="results-tab">
+                <table class="table table-hover">
+                <thead>
+
+                </thead>
+                <tbody>
+                    {% for label,value in classificationmodel.get_fields_by_type_results %}
+                    <tr>
+
+                        <td>
+                            <h6 class="m-0"> {{ label | upper }} </h6>
+                        </td>
+                        {% if label == 'results' %}    
+                        {% if value %}
+                            <td style="word-break:break-all;style="width: 50%"">
+                                <h6 class="m-0"><a href="{% url 'resultsclassificationmodel_detail' value %}">View Results </a>
+                                </h6>
+                            </td>
+                            {% else %}
+                            <td>None</td>
+                            {% endif %}
+                            {% else %}
+                            <td>
+                                <h6 class="m-0"> {{ value | upper }} </h6>
+                            </td>
+                            {% endif %}
+                    </tr>
+                    {% endfor %}
+                <tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div> 
 <div>
 
 <div class="d-flex justify-content-center">
-    <a href="{% url 'all' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
-            {% comment %}
-  <!-- <a href="{% url 'variables' experiment_id=classificationmodel.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a> -->
-  <a href="{% url 'classificationmodel' experiment_id=classificationmodel.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a>
-  {% endcomment %}
+    <a href="{% url 'experiment-list' %}" class="d-block btn btn-primary btn-lg my-5">BACK</a>
+    <a href="{% url 'classificationmodel_update' classificationmodel.experiment_id %}" class="d-block btn btn-primary btn-lg my-5">UPDATE</a>
+    {% if classificationmodel.results %}
+
+    <a href="{% url 'resultsclassificationmodel_detail' pk=classificationmodel.results_id %}" class="d-block btn btn-primary btn-lg my-5">SHOW RESULTS</a>
+    {% endif %}
+
+
         </div>
-<div class="d-flex justify-content-center"></div>
 </div>
         
 </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-3 col-md-6 col-lg-4 col-xl-2">
+        <div class="card user-list">
+            <div class="card-header">
+                <h5>Create an experiment</h5>
+            </div>
+            <div class="card-block">
+                <div class="row align-items-center justify-content-center m-b-20">
+                    <div class="d-flex justify-content-center">
+                        <div>
+                            
+                            <ul class="list-inline list-pipe add_experiments">
+                
+              <li ><span class="badge badge-secondary addlink">  <a href="{% url 'classificationmodel_create_scratch' %}">Classification model</a></span></li>
+              <li><span class="badge badge-secondary addlink">  <a href="">Input Data </a></span></li>
+              <li><span class="badge badge-secondary addlink">  <a href="">Stationarity Tests </a></span></li>
+              <li><span class="badge badge-secondary addlink">  <a href="">Feature Selection</a></span></li>
+              <li><span class="badge badge-secondary addlink">  <a href="">Manually select variables</a></span></li>
+            </ul>
+
+                        </div>
+                    </div>
+     
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 {% endblock  %}

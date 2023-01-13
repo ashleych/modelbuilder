@@ -102,9 +102,9 @@ class Experiment(models.Model):
     run_in_the_background = models.BooleanField(default=False)
     enable_spark = models.BooleanField(default=False)
     all_preceding_experiments = models.TextField(max_length=20000, blank=True, null=True)
-    train_data_split = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='train_data_split_randomly')
-    test_data_split = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='test_data_split_randomly')
-    test_flag_new = models.BooleanField(default=False, null = True, blank=True, editable=False)
+    train_data_saved = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='train_data_split_randomly')
+    test_data_saved = models.ForeignKey(Traindata, on_delete=models.CASCADE, null=True, blank=True, related_name='test_data_split_randomly')
+    test_flag = models.BooleanField(default=False, null = True, blank=True, editable=False)
 
     def _track_precedents(self):
         if self.previous_experiment:
@@ -122,6 +122,35 @@ class Experiment(models.Model):
 
     def get_fields(self):
         return [(field.verbose_name, field.value_from_object(self)) for field in self.__class__._meta.fields[1:]]
+
+    def get_fields_by_type(self,type):
+        # Helper function to categorise fields by type
+        about_ = ["name", "experiment_type", "created_on_date", "created_by"]
+        model_parameters_ = ["traindata", "testdata", "train_split", "test_split", "cross_validation", "label_col", "feature_cols", "ignored_columns"]
+        run_details_ = ["run_in_the_background", "enable_spark", "save_train_test_data"]
+        results_ = ["experiment_status", "run_start_time", "run_end_time", 'results']
+        field_type_dict = {'about': about_,'model_parameters': model_parameters_,'run_details':run_details_,'results':results_   }
+        fields_list_ordered=[]
+
+        for field_name in field_type_dict[type]:
+            for f in self.__class__._meta.fields[1:]:
+                if f.name == field_name:
+                    fields_list_ordered.append(f)
+                    break
+            pass
+        fields = [(field.verbose_name, field.value_from_object(self)) for field in fields_list_ordered]
+        return fields
+            
+        # return [(field.verbose_name, field.value_from_object(self)) for field in self.__class__._meta.fields[1:]]
+    def get_fields_by_type_about(self):
+        return self.get_fields_by_type('about')
+    def get_fields_by_type_model_parameters(self):
+        return self.get_fields_by_type('model_parameters')
+    def get_fields_by_type_run_details(self):
+        return self.get_fields_by_type('run_details')
+    def get_fields_by_type_results(self):
+        return self.get_fields_by_type('results')
+    
 
     def get_absolute_url(self):
         if self.experiment_type != 'input':

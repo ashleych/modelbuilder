@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     # 'dynamic_breadcrumbs'
     'logistic_build',
     'django_filters',
-     'crispy_forms',
+    'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -94,13 +94,7 @@ DATABASES = {
             'NAME': BASE_DIR / 'testdb.sqlite3',
         },
     },
-    'test': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'testdb.sqlite3',
-        'TEST': {
-            'NAME': BASE_DIR / 'testdb.sqlite3',
-        },
-    }
+
 }
 CELERY_RESULT_BACKEND = "django-db"
 # This configures Redis as the datastore between Django + Celery
@@ -126,8 +120,6 @@ Q_CLUSTER = {
 }
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
-
-
 
 AUTH_PASSWORD_VALIDATORS = [
     # {

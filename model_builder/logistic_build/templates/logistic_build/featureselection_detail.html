@@ -29,7 +29,11 @@
                     {% elif label == "results" %}
                         <tr>
                             <td>{{label | upper}}</td>
-                            <td style="word-break:break-all;style="width: 50%""><a href="{% url 'resultsfeatureselection_detail' value %}">VIEW </a></td>
+                            {% if value %}
+                            <td style="word-break:break-all;style="width: 50%""><a href="{% url 'resultsfeatureselection_detail' value %}">View Results </a></td>
+                            {% else %}
+                            <td>None</td>
+                            {% endif %}
                         </tr>
                     
                     {% endif %}

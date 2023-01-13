@@ -1,4 +1,5 @@
 from django import forms
+import time
 import json
 from django.test import TestCase
 from pprint import pprint
@@ -429,7 +430,10 @@ def test_sample_post_classificationmodel(client, django_user_model):
 
 
 @pytest.mark.parametrize('save_train_test_data', [True, False])
-def test_sample_post_classificationmodel(client, django_user_model, save_train_test_data):
+@pytest.mark.parametrize('run_in_the_background', [True, False])
+def test_create_and_update_classificationmodel(client, django_user_model, save_train_test_data,run_in_the_background):
+    # This mimics setup when user starts an experiment from 'Start Experiment" page
+    print('run in the background :' , run_in_the_background)
     fp = os.path.join(TESTING_DIRECTORY, 'santander_train_2k.csv')
     santander_data = Traindata.objects.create(train_path=fp, train_data_name='santander')
     username = "Siri"
@@ -439,7 +443,7 @@ def test_sample_post_classificationmodel(client, django_user_model, save_train_t
     feature_cols = ['var3', 'var15', 'imp_ent_var16_ult1', 'imp_op_var39_comer_ult1']
 
     c = Classificationmodel.objects.create(traindata=santander_data, name='new', feature_cols=json.dumps(feature_cols), experiment_type='classificationmodel',
-                                           label_col=label_col, run_now=False, run_in_the_background=False, train_split=0.7, test_split=0.3, save_train_test_data=save_train_test_data)
+                                           label_col=label_col, run_now=False, run_in_the_background=run_in_the_background, train_split=0.7, test_split=0.3, save_train_test_data=save_train_test_data)
     c.run_now = True
     c.save()
     assert isinstance(c, Classificationmodel)
@@ -453,20 +457,20 @@ def test_sample_post_classificationmodel(client, django_user_model, save_train_t
     assert updated_experiment.results.train_results.precision is not None
     assert len(json.loads(updated_experiment.results.train_results.precision_plot_data)) > 0
 
-import time
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize('save_train_test_data', [True, False])
 @pytest.mark.parametrize('run_in_the_background', [True, False])
 def test_view_classificationmodel(client, django_user_model, save_train_test_data, run_in_the_background):
     fp = os.path.join(TESTING_DIRECTORY, 'santander_train_2k.csv')
-    santander_data = Traindata.objects.create(train_path=fp, train_data_name='santander')
     username = "Siri"
     password = "siri"
     user = django_user_model.objects.create_user(username=username, password=password)
+    santander_data = Traindata.objects.create(train_path=fp, train_data_name='santander')
     label_col = "TARGET"
     feature_cols = ['var3', 'var15', 'imp_ent_var16_ult1', 'imp_op_var39_comer_ult1']
     print(run_in_the_background)
-    c = Classificationmodel.objects.create(traindata=santander_data, name='new', feature_cols=json.dumps(feature_cols), experiment_type='classificationmodel', label_col=label_col, run_now=True, run_in_the_background = run_in_the_background, created_by=user, train_split=0.7, test_split=0.3, enable_spark=False, save_train_test_data=save_train_test_data)
+
+    c = Classificationmodel.objects.create(traindata=santander_data, name='new', feature_cols=json.dumps(feature_cols), experiment_type='classificationmodel', label_col=label_col, run_now=True, run_in_the_background = run_in_the_background, created_by=user, train_split=0.7, test_split=0.3, enable_spark=False, save_train_test_data=save_train_test_data,test_flag=True)
     if run_in_the_background:
         assert c.results is None,"results not populated"
         time.sleep(10)
@@ -474,12 +478,13 @@ def test_view_classificationmodel(client, django_user_model, save_train_test_dat
     # assumption that the task would compete in 10 seconds
     refreshed_class_model= Classificationmodel.objects.get(pk=c.experiment_id)
     assert refreshed_class_model.results, "results still not done, try increasing the sleep time in the tests if needed"
+    assert refreshed_class_model.results.train_results.areaUnderROC == 0.29, "train roc doesnt match"
+    assert refreshed_class_model.results.test_results.areaUnderROC == 0.33, "test auc doesnt match"
     client.login(username=username, password=password)
     url = reverse('classificationmodel_detail', kwargs={"pk": c.experiment_id})
     response = client.get(url)
     assert response.status_code == 200
-    with open("yourhtmlfile_mvs.html", "wb") as file:
-        file.write(response.content)
+
 
 
 @pytest.mark.django_db()

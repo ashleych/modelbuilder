@@ -66,7 +66,7 @@ class ClassificationmodelForm(forms.ModelForm):
     # = forms.MultipleChoiceField()
     class Meta:
         model = Classificationmodel
-        fields= [ "name", "traindata","testdata","do_create_data", "experiment_type","previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols","ignored_columns", "cross_validation","enable_spark","experiment_status"]
+        fields= [ "name", "traindata","testdata", "save_train_test_data", "experiment_type","previous_experiment", "run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","enable_spark","experiment_status"]
         widgets = {'experiment_status': forms.HiddenInput(),
         "feature_cols": forms.SelectMultiple()}
         # forms.CharField(required=False, widget=forms.SelectMultiple)

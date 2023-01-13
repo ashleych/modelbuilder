@@ -31,7 +31,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic import RedirectView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse, reverse_lazy
-from .models import Traindata, Variables, Experiment, Stationarity, Manualvariableselection, Classificationmodel, ResultsClassificationmodel, NotificationModelBuild, RegressionMetrics, Regressionmodel, ResultsRegressionmodel, Featureselection, ResultsFeatureselection,TopModels
+from .models import Traindata, Variables, Experiment, Stationarity, Manualvariableselection, Classificationmodel, ResultsClassificationmodel, NotificationModelBuild, RegressionMetrics, Regressionmodel, ResultsRegressionmodel, Featureselection, ResultsFeatureselection, TopModels,ExperimentFilter
 from .forms import  ExperimentForm, RegressionmodelForm, StationarityForm, ManualvariableselectionForm, ClassificationmodelForm, FeatureselectionForm
 from .Logisticregression_spark import plot_roc, plot_precision_recall
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -109,6 +109,11 @@ class ExperimentFormView(CreateView):
     # fields= '__all__'
     template_name = 'logistic_build/experiment_form.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bread_crumb'] = ["Experiment", "Create"]
+        return context
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
@@ -128,20 +133,26 @@ class ExperimentBaseView(LoginRequiredMixin, View):
     success_url = reverse_lazy('all')
 
 
-class ExperimentListView(ExperimentBaseView, ListView):
-    """View to list all films.
-    Use the 'film_list' variable in the template
-    to access all Experiment objects"""
-    model = Experiment
-    paginate_by = 10
+def experiment_list(request):
+    experiment_list_filter = ExperimentFilter(request.GET, queryset=Experiment.objects.all())
+    bread_crumb = ['Experiment', 'Create']
+    return render(request, 'logistic_build/experiment_filter.html', {'experiment_list': experiment_list_filter, 'bread_crumb' : bread_crumb})
+    # Filter and experiment list contain the same information. Need to remove one of those 'filter' : experiment_list_filter
 
-    def get_queryset(self):
-        queryset = Experiment.objects.exclude(experiment_type='Input')
-        return queryset
+# class ExperimentListView(ExperimentBaseView, ListView):
+#     """View to list all films.
+#     Use the 'film_list' variable in the template
+#     to access all Experiment objects"""
+#     model = Experiment
+#     paginate_by = 10
 
-    def get_context_data(self, **kwargs):
-        s = super().get_context_data(**kwargs)
-        return s
+#     def get_queryset(self):
+#         queryset = Experiment.objects.exclude(experiment_type='Input')
+#         return queryset
+
+#     def get_context_data(self, **kwargs):
+#         s = super().get_context_data(**kwargs)
+#         return s
 
 
 class ExperimentDetailView(ExperimentBaseView, RedirectView, DetailView):
@@ -169,6 +180,8 @@ class ExperimentCreateView(ExperimentBaseView, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        context['bread_crumb']=["Experiment","Create"]
         return context
 
 
@@ -381,6 +394,15 @@ class ClassificationmodelDetailView(LoginRequiredMixin, ClassificationmodelBaseV
             context['previous_experiments_list'] = json.loads(context['classificationmodel'].all_preceding_experiments)
             context['current_experiment_list'] = tuple([context['classificationmodel'].experiment_id, context['classificationmodel'].experiment_type, context['classificationmodel'].name])
 
+        string_attributes = ["feature_cols"]
+        for attrib in string_attributes:
+            value_= getattr(context['classificationmodel'], attrib)
+            if value_:
+                context[attrib] = json.loads(value_)
+            else:
+                context[attrib] = None
+        context['string_attributes'] = string_attributes
+        context['bread_crumb']=["Classification model","Detail"]
         return context
 
 
@@ -404,6 +426,7 @@ class ClassificationmodelCreateView(LoginRequiredMixin, CreateView):
         for t in Traindata.objects.all().values():
             train_data_dict[t['file_id']] = t['column_names']
         context['train_data_dict'] = json.dumps(train_data_dict)
+        context['bread_crumb']=["Classification model","Creation"]
         return context
 
 # def post(self, **kwargs):
@@ -458,6 +481,8 @@ class ClassificationmodelUpdateView(LoginRequiredMixin, UpdateView):
         for t in Traindata.objects.all().values():
             train_data_dict[t['file_id']] = t['column_names']
         context['train_data_dict'] = json.dumps(train_data_dict)
+        context['bread_crumb']=["Classification model", "Updation"]
+
         return context
 
     def get_form_kwargs(self):
@@ -479,6 +504,8 @@ class ClassificationmodelDeleteView(LoginRequiredMixin, ClassificationmodelBaseV
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['name'] = context['object'].name
+        context['bread_crumb']=["Classification model", "Delete"]
+
         return context
 
 
@@ -553,6 +580,8 @@ class ResultsClassificationmodelDetailView(LoginRequiredMixin, ResultsClassifica
 
         unread_notifications = NotificationModelBuild.objects.filter(is_read=False).count()
         context["unread_notifications"] = unread_notifications
+        context['bread_crumb'] = ["Classification model", "Results"]
+
         return context
 
 
@@ -582,7 +611,6 @@ def login_view(request):
 
 
 def register_user(request):
-
     msg = None
     success = False
 
@@ -730,6 +758,8 @@ class FeatureselectionUpdateView(LoginRequiredMixin, UpdateView):
         for t in Traindata.objects.all().values():
             train_data_dict[t['file_id']] = t['column_names']
         context['train_data_dict'] = json.dumps(train_data_dict)
+        context['bread_crumb'] = ["Experiment", "Feature Selection", "Create"]
+
         return context
 
     def get_form_kwargs(self):
@@ -756,6 +786,8 @@ class FeatureselectionDeleteView(LoginRequiredMixin, FeatureselectionBaseView, D
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['name'] = context['object'].name
+        context['bread_crumb']=["Experiment", "Feature Selection Delete"]
+
         return context
 
 
@@ -834,4 +866,5 @@ class ResultsFeatureselectionDetailView(LoginRequiredMixin, ResultsFeatureselect
             model['cv_scores']= json.loads(model['cv_scores'])
         # s['qconstant_features']= json.loads(s['resultsfeatureselection'].quasi_constant_features)
         s['topmodels']=topmodels
+        s['bread_crumb']=["Experiment", "Feature Selection", "Results"]
         return s

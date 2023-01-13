@@ -56,3 +56,13 @@ def total_notification(name='total_notification'):
     
     # return {"notifications": notifications,"count":count, "time_since_creation": time_since_creation,"created_by":created_by,"messages":messages,"names":names,"type":type,"experiments":experiments}
     return {"new_notifications": new_notifications,"old_notifications":old_notifications,"count":count}
+
+
+
+
+@register.simple_tag
+def verbose_names(instance, field_name,name='verbose_names'):
+    """
+    Returns verbose_name for a field.
+    """
+    return instance._meta.get_field(field_name).verbose_name.title()
