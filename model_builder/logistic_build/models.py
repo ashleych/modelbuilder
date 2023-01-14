@@ -20,7 +20,7 @@ import os
 import glob
 import datatable as dt
 
-
+import shortuuid
 
 class Traindata(models.Model):
     file_id = models.AutoField(primary_key=True)
@@ -128,7 +128,7 @@ class Experiment(models.Model):
         about_ = ["name", "experiment_type", "created_on_date", "created_by"]
         model_parameters_ = ["traindata", "testdata", "train_split", "test_split", "cross_validation", "label_col", "feature_cols", "ignored_columns"]
         run_details_ = ["run_in_the_background", "enable_spark", "save_train_test_data"]
-        results_ = ["experiment_status", "run_start_time", "run_end_time", 'results']
+        results_ = ["experiment_status", "run_start_time", "run_end_time", 'train_data_saved','test_data_saved','results']
         field_type_dict = {'about': about_,'model_parameters': model_parameters_,'run_details':run_details_,'results':results_   }
         fields_list_ordered=[]
 
@@ -381,6 +381,7 @@ class ClassificationMetrics(models.Model):
 
 class ResultsClassificationmodel(models.Model):
     coefficients = models.TextField(max_length=20000, blank=True, null=True)
+    intercept = models.TextField(max_length=20000, blank=True, null=True)
     features = models.TextField(max_length=20000, blank=True, null=True)
     train_nrows = models.IntegerField(blank=True, null=True)
     test_nrows = models.IntegerField(blank=True, null=True)
@@ -394,7 +395,7 @@ class Classificationmodel(Experiment):
     train_split = models.FloatField(blank=True, null=True)
     test_split = models.FloatField(blank=True, null=True)
     feature_cols = models.TextField(max_length=20000)
-    ignored_columns = models.TextField(max_length=20000, blank=True, null=True)
+    ignored_columns = models.TextField(max_length=200, blank=True, null=True)
     cross_validation = models.IntegerField(default=0, null=True, blank=True)
     results = models.ForeignKey(ResultsClassificationmodel, on_delete=models.CASCADE, null=True, blank=True)
     save_train_test_data = models.BooleanField(null=True, blank=True, default=False)
@@ -475,8 +476,8 @@ class Classificationmodel(Experiment):
         test_features.to_csv(test_file_name_as_stored_on_disk)
 
         # creating traindata objects
-        self.train_data_split = Traindata.objects.create(train_path=train_file_name_as_stored_on_disk, train_data_name=self.name + "_train_split")
-        self.test_data_split = Traindata.objects.create(train_path=test_file_name_as_stored_on_disk, train_data_name=self.name + "_test_split")
+        self.train_data_saved = Traindata.objects.create(train_path=train_file_name_as_stored_on_disk, train_data_name=self.name + "_train_saved_" + shortuuid.uuid())
+        self.test_data_saved = Traindata.objects.create(train_path=test_file_name_as_stored_on_disk, train_data_name=self.name + "_test_saved_" + shortuuid.uuid())
 
 
 class RegressionMetrics(models.Model):

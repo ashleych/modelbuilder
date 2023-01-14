@@ -1,9 +1,8 @@
 {% extends 'logistic_build/index.html' %}
 {% block  list_view_content%}
 {% load logistic_build_tags %}
-<div>
+{% load static %}
 
-</div>
 <div class="col-sm-12">
     <div class="row">
     <div class="col-xl-8 col-md-6">
@@ -124,18 +123,24 @@
                             <h6 class="m-0"> {{ label | upper }} </h6>
                         </td>
                         {% if label == 'results' %}    
-                        {% if value %}
-                            <td style="word-break:break-all;style="width: 50%"">
+                            {% if value %}
+                            <td style="word-break:break-all;style='width: 50%'">
                                 <h6 class="m-0"><a href="{% url 'resultsclassificationmodel_detail' value %}">View Results </a>
                                 </h6>
                             </td>
                             {% else %}
                             <td>None</td>
                             {% endif %}
+                            {% elif  label == 'train data saved' or label == 'test data saved' %}
+                                {% if value %}
+                                <td>
+                                    <h6><a href="{% url 'traindata_detail' value %}">{{ classificationmodel.train_data_saved.train_data_name }} <img src="{% static 'logistic_build/icon-viewlink.svg' %}"></a></h6>
+                                </td>
+                                {% endif %}
                             {% else %}
-                            <td>
-                                <h6 class="m-0"> {{ value | upper }} </h6>
-                            </td>
+                                <td>
+                                    <h6 class="m-0"> {{ value | upper }} </h6>
+                                </td>
                             {% endif %}
                     </tr>
                     {% endfor %}

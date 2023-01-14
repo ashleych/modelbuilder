@@ -37,6 +37,7 @@ from .Logisticregression_spark import plot_roc, plot_precision_recall
 from django.contrib.auth.mixins import LoginRequiredMixin
 # from view_breadcrumbs import ListBreadcrumbMixin,DetailBreadcrumbMixin
 from .forms import ExampleForm
+import ast
 
 
 def index(request):
@@ -402,7 +403,7 @@ class ClassificationmodelDetailView(LoginRequiredMixin, ClassificationmodelBaseV
             else:
                 context[attrib] = None
         context['string_attributes'] = string_attributes
-        context['bread_crumb']=["Classification model","Detail"]
+        context['bread_crumb'] = ["Classification model", "Detail"]
         return context
 
 
@@ -542,38 +543,44 @@ class ResultsClassificationmodelDetailView(LoginRequiredMixin, ResultsClassifica
 
         def get_fpr_tpr(result, type='train'):
             view_dict = {}
-            fpr = json.loads(getattr(getattr(result, type+'_results'), 'FPR'))
-            tpr = json.loads(getattr(getattr(result, type+'_results'), 'TPR'))
-            auc = getattr(getattr(result, type+'_results'), 'areaUnderROC')
+            fpr = json.loads(getattr(getattr(result, type +'_results'), 'FPR'))
+            tpr = json.loads(getattr(getattr(result, type +'_results'), 'TPR'))
+            auc = getattr(getattr(result, type +'_results'), 'areaUnderROC')
             fig = plot_roc(fpr, tpr, auc)
             plotly_plot_obj = plot({'data': fig}, output_type='div')
             view_dict['rocPlot'] = plotly_plot_obj
-            view_dict['auc'] = auc
+            view_dict['auc'] = auc * 100
             return view_dict
 
         def get_precision_recall_plot(result, type='train'):
             view_dict = {}
-            precision = json.loads(getattr(getattr(result, type+'_results'), 'precision_plot_data'))
-            recall = json.loads(getattr(getattr(result, type+'_results'), 'recall_plot_data'))
-            pr = getattr(getattr(result, type+'_results'), 'areaUnderPR')
+            precision = json.loads(getattr(getattr(result, type + '_results'), 'precision_plot_data'))
+            recall = json.loads(getattr(getattr(result, type + '_results'), 'recall_plot_data'))
+            pr = getattr(getattr(result, type + '_results'), 'areaUnderPR')
             fig = plot_precision_recall(recall_plot_data=recall, precision_plot_data=precision, areaUnderPR=pr)
 
             plotly_plot_obj = plot({'data': fig}, output_type='div')
             view_dict['prPlot'] = plotly_plot_obj
-            view_dict['pr'] = pr
+            view_dict['pr'] = pr * 100
             return view_dict
         res = context['resultsclassificationmodel']
-        context['coefficients'] = context['resultsclassificationmodel'].coefficients
-        context['features'] = context['resultsclassificationmodel'].features
-        context['train_nrows'] = context['resultsclassificationmodel'].train_nrows
-        context['test_nrows'] = context['resultsclassificationmodel'].test_nrows
+        
+        context['coefficients'] = ast.literal_eval(json.loads(res.coefficients))
+        context['intercept'] = res.intercept
+        
+        context['coefficients_js'] = json.dumps(context['coefficients'])
+        context['intercept_js'] = json.dumps(context['intercept'])
+        
+        context['features'] = ast.literal_eval(json.loads(res.features))
+        context['train_nrows'] = res.train_nrows
+        context['test_nrows'] = res.test_nrows
 
-        context['train_res_roc'] = get_fpr_tpr(res, type='train')
+        context['train_res_roc'] = get_fpr_tpr(res, type='train') 
 
-        context['train_res_pr'] = get_precision_recall_plot(res, type='train')
+        context['train_res_pr'] = get_precision_recall_plot(res, type='train') 
         if res.test_results.areaUnderROC:
-            context['test_res_roc'] = get_fpr_tpr(res, type='test')
-            context['test_res_pr'] = get_precision_recall_plot(res, type='test')
+            context['test_res_roc'] = get_fpr_tpr(res, type='test') 
+            context['test_res_pr'] = get_precision_recall_plot(res, type='test') 
         else:
             context['test_res_roc'] = None
             context['test_res_pr'] = None

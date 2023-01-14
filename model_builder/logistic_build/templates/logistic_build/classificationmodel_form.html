@@ -44,20 +44,19 @@
 
 
 window.addEventListener('load', function() {
-    var sizes = ["XXL", "XL", "L", "M", "S", "XS"];
 // train data dict is sent by django into the context varaible in the templates
     train_data_initial =$('#id_traindata').val(); //if value is prepopulated, usually would happen in the case previus exp is chosen, else will be blank
+    feature_cols_drop_down =$('#id_feature_cols').val(); //if value is prepopulated, usually would happen in the case previus exp is chosen, else will be blank
     if(train_data_dict[train_data_initial]){
         
-        
+        if (Object.is(feature_cols_drop_down, undefined) || Object.is(feature_cols_drop_down, null)){
         options_list= JSON.parse(train_data_dict[train_data_initial])
         buildDropDowns(options_list);
-        console.log(JSON.parse(train_data_dict[train_data_initial]));
+        }
     }
 
         
         $("#id_traindata").change(function() {
-            console.log("changed values");
             train_data_initial =$('#id_traindata').val();
             if(train_data_dict[train_data_initial]){
                 train_data_chosen_by_user =$('#id_traindata').val();

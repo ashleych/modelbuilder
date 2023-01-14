@@ -26,6 +26,10 @@ register = template.Library()
 def current_time(format_string):
     return datetime.datetime.now().strftime(format_string)
 
+@register.filter(name='zip')
+def zip_lists(a, b):
+  return zip(a, b)
+
 
 @register.simple_tag
 def total_notification(name='total_notification'):

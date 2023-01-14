@@ -59,7 +59,8 @@ class LogisticRegressionModel_sklearn():
         self.aggregate_test_accuracy_results(type='train')
         self.aggregate_test_accuracy_results(type='test')
         self.get_coefficients_names()
-
+        self.get_intercept()
+        
     def read_csv_data(self, filepath: str, inferSchema):
         if os.path.exists(filepath):
             df = pd.read_csv(filepath)
@@ -206,6 +207,10 @@ class LogisticRegressionModel_sklearn():
         self.overall_result.intercept = self.logit.intercept_[0]
         self.overall_result.features = json.dumps(
             list(self.train_features.columns))
+
+    def get_intercept(self):
+        if self.logit.intercept_[0]:
+            self.overall_result.intercept = self.logit.intercept_[0]
 
     def plot_beta_coeficients(self):
         beta = np.sort(self.lrModel.coefficients)

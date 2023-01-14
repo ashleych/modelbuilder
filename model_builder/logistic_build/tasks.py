@@ -14,7 +14,7 @@ from .glr_spark import RegressionModel_spark
 from logistic_build.scripts import sklearn_feature_selection
 from pathlib import Path
 from django.conf import settings
-
+import shortuuid
 
 def do_stationarity_test_django_q(experiment_id):
     experiment = m.Stationarity.objects.get(experiment_id=experiment_id)
@@ -88,7 +88,7 @@ def run_logistic_regression(experiment_id):
         train_results = m.ClassificationMetrics.objects.create(**logistic_results.train_result.all_attributes)
         test_results = m.ClassificationMetrics.objects.create(**logistic_results.test_result.all_attributes)
 
-        experiment.results = m.ResultsClassificationmodel.objects.create(train_results=train_results, test_results=test_results, coefficients=json.dumps(logistic_results.overall_result.coefficients), train_nrows=logistic_results.overall_result.train_nrows, test_nrows=logistic_results.overall_result.test_nrows, features=json.dumps(logistic_results.overall_result.features))
+        experiment.results = m.ResultsClassificationmodel.objects.create(train_results=train_results, test_results=test_results, intercept= logistic_results.overall_result.intercept, coefficients=json.dumps(logistic_results.overall_result.coefficients), train_nrows=logistic_results.overall_result.train_nrows, test_nrows=logistic_results.overall_result.test_nrows, features=json.dumps(logistic_results.overall_result.features))
         experiment.experiment_status = 'DONE'
         if experiment.save_train_test_data:
             experiment.create_train_test_data(train_features=logistic_results.train_features, test_features= logistic_results.test_features, train_labels= logistic_results.train_labels, test_labels= logistic_results.test_labels)
