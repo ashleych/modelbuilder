@@ -68,14 +68,24 @@ class ClassificationmodelForm(forms.ModelForm):
         model = Classificationmodel
         fields= [ "name", "traindata","testdata", "save_train_test_data", "experiment_type","previous_experiment", "run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","enable_spark","experiment_status"]
         widgets = {'experiment_status': forms.HiddenInput(),
-        "feature_cols": forms.SelectMultiple()}
+        "feature_cols": forms.SelectMultiple(),
+        "example_field": forms.SelectMultiple(choices= [('pi', 'PI'), ('ci', 'CI')])}
         # forms.CharField(required=False, widget=forms.SelectMultiple)
 
     def __init__(self, *args, **kwargs):
+        # choices = kwargs.pop("choices")
         super().__init__(*args, **kwargs)
-        self.fields['train_split'].widget.attrs['min'] = 0
-        self.fields['train_split'].widget.attrs['max'] = 1
+        if self.instance:
+            # self.fields['feature_cols'].choices = json.loads(self.instance.feature_cols)
+            if self.instance.feature_cols:
+                choices= [(choice, choice) for choice in json.loads(self.instance.feature_cols)]
+                self.fields['feature_cols'].choices = choices
+                self.fields['feature_cols'].widget.choices = choices
         # self.request = kwargs.pop("request") # store value of request 
+        self.fields['train_split'].widget.attrs['max'] = 1
+        self.fields['train_split'].widget.attrs['min'] = 0
+        # self.fields['example_field'].initial = ['pi']
+
         # print(self.request.user) 
     def clean_experiment_type(self):
         return 'classificationmodel'
@@ -91,7 +101,7 @@ class ClassificationmodelForm(forms.ModelForm):
             if not float(cleaned_data['train_split']) + float(cleaned_data['test_split']) == 1:
                 raise forms.ValidationError("Train and test splits need to add up to 1")
         
-        cleaned_data['feature_cols']= json.dumps(ast.literal_eval(cleaned_data['feature_cols']))
+        cleaned_data['feature_cols'] = json.dumps(ast.literal_eval(cleaned_data['feature_cols']))
         # if self._errors and 'title' in self._errors:
         # cleaned_data['experiment_type']='newclassificationmodel'
         return cleaned_data
@@ -101,7 +111,7 @@ class RegressionmodelForm(forms.ModelForm):
     class Meta:
         model = Regressionmodel
         # fields = '__all__'
-        fields= [ "name", "traindata","do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","experiment_status"]
+        fields= [ "name", "traindata" ,"do_create_data", "previous_experiment","run_in_the_background","label_col", "feature_cols", "train_split", "test_split", "feature_cols", "ignored_columns", "cross_validation","experiment_status"]
         widgets = {'experiment_status': forms.HiddenInput()}
     def clean(self):
         # form.cleaned_data['extra']

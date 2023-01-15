@@ -31,6 +31,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic import RedirectView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse, reverse_lazy
+from django.contrib.messages.views import SuccessMessageMixin
 from .models import Traindata, Variables, Experiment, Stationarity, Manualvariableselection, Classificationmodel, ResultsClassificationmodel, NotificationModelBuild, RegressionMetrics, Regressionmodel, ResultsRegressionmodel, Featureselection, ResultsFeatureselection, TopModels,ExperimentFilter
 from .forms import  ExperimentForm, RegressionmodelForm, StationarityForm, ManualvariableselectionForm, ClassificationmodelForm, FeatureselectionForm
 from .Logisticregression_spark import plot_roc, plot_precision_recall
@@ -38,7 +39,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 # from view_breadcrumbs import ListBreadcrumbMixin,DetailBreadcrumbMixin
 from .forms import ExampleForm
 import ast
-
 
 def index(request):
     # return render(request, 'logistic_build/layouts/base.html')
@@ -407,13 +407,14 @@ class ClassificationmodelDetailView(LoginRequiredMixin, ClassificationmodelBaseV
         return context
 
 
-class ClassificationmodelCreateView(LoginRequiredMixin, CreateView):
+class ClassificationmodelCreateView(LoginRequiredMixin,   SuccessMessageMixin, CreateView):
     """View to create a new film"""
     # fields = ['name', 'traindata']
     # model = Classificationmodel
     model = Classificationmodel
     form_class = ClassificationmodelForm
     template_name='logistic_build/classificationmodel_form.html'
+    success_message = "Classification model was created successfully"
 
     # @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -469,11 +470,11 @@ class ClassificationmodelCreateView(LoginRequiredMixin, CreateView):
         form.instance.experiment_type = 'classificationmodel'
         form.instance.created_by = self.request.user
         return super().form_valid(form)
-
-class ClassificationmodelUpdateView(LoginRequiredMixin, UpdateView):
+class ClassificationmodelUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     """View to update a film"""
     model = Classificationmodel
     form_class = ClassificationmodelForm
+    success_message = "Classification model was updated successfully"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -498,6 +499,12 @@ class ClassificationmodelUpdateView(LoginRequiredMixin, UpdateView):
         form.instance.experiment_status = 'NOT_STARTED'
         return super().form_valid(form)
 
+    def get_initial(self):
+        initial = super(ClassificationmodelUpdateView, self).get_initial()
+        if hasattr(self, 'object'):
+            if hasattr(self.object,'feature_cols') and self.object.feature_cols:
+                initial['feature_cols'] = json.loads(self.object.feature_cols)
+        return initial
 class ClassificationmodelDeleteView(LoginRequiredMixin, ClassificationmodelBaseView, DeleteView):
     """View to delete a film"""
     template_name = 'logistic_build/experiment_confirm_delete.html'

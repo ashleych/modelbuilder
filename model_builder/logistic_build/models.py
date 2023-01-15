@@ -399,7 +399,7 @@ class Classificationmodel(Experiment):
     cross_validation = models.IntegerField(default=0, null=True, blank=True)
     results = models.ForeignKey(ResultsClassificationmodel, on_delete=models.CASCADE, null=True, blank=True)
     save_train_test_data = models.BooleanField(null=True, blank=True, default=False)
-
+    
     def get_absolute_url(self):
         if self.experiment_status and self.experiment_status != 'NOT_STARTED':
             return reverse('classificationmodel_detail', args=[str(self.experiment_id)])

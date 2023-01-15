@@ -1,56 +1,113 @@
-{% extends "logistic_build/layouts/base.html" %}
-{% block title %} Dashboard {% endblock %} 
+{% extends "logistic_build/layouts/base.html" %} 
+{% block title %} 
+Dashboard 
+{% endblock %}
 
 <!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}{% endblock stylesheets %} 
 {% load logistic_build_tags %}
 {% block content %}
 
-    
-   <!-- [ Main Content ] start -->
-    <div class="pcoded-main-container">
-        <div class="pcoded-wrapper">
-            <div class="pcoded-content">
-                <div class="pcoded-inner-content">
-                    <!-- [ breadcrumb ] start -->
-                    <div class="page-header">
-                        <div class="page-block">
-                            <div class="row align-items-center">
-                                <div class="col-md-12">
-                                    <div class="page-header-title">
-                                        {% if bread_crumb %}
-                                        <h5 class="m-b-10"></h5>
-                                        {% endif %}
-                                    </div>
-                                    <ul class="breadcrumb">
-                                        <li class="breadcrumb-item"><a href="/"><i class="feather icon-home"></i></a></li>
-                                        {% if bread_crumb %}
-                                        {% for crumb in bread_crumb %}
-                                        <li class="breadcrumb-item"><a href="javascript:">{{ crumb}} </a></li>
-                                        {% endfor %}
-                                        {% endif %}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- [ breadcrumb ] end -->
-                    <div class="main-body">
-                        <div class="page-wrapper">
-                            <!-- [ Main Content ] start -->
-                            
-                                                                    {% block file_input %}{% endblock file_input %}
-                                                                    {% block list_view_content%}{% endblock  %}
-                            
-                            <!-- [ Main Content ] end -->
-                        </div>
-                    </div>
+<script>
+  function hideToast() {
+    $(".toast").hide();
+  }
+</script>
+<!-- [ Main Content ] start -->
+<div class="pcoded-main-container">
+  <div class="pcoded-wrapper">
+    <div class="pcoded-content">
+      <div class="pcoded-inner-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+          <div class="page-block">
+            <div class="row align-items-center">
+              <div class="col-md-12">
+                <div class="page-header-title">
+                  {% if bread_crumb %}
+                  <h5 class="m-b-10"></h5>
+                  {% endif %}
                 </div>
+                <ul class="breadcrumb">
+                  <li class="breadcrumb-item">
+                    <a href="/"><i class="feather icon-home"></i></a>
+                  </li>
+                  {% if bread_crumb %} {% for crumb in bread_crumb %}
+                  <li class="breadcrumb-item">
+                    <a href="javascript:">{{ crumb}} </a>
+                  </li>
+                  {% endfor %} {% endif %}
+                </ul>
+              </div>
             </div>
+          </div>
         </div>
+        <!-- [ breadcrumb ] end -->
+        <div class="main-body">
+          <div class="page-wrapper">
+            <!-- [ Main Content ] start -->
+
+             {% block file_input %}
+             {% endblock file_input%} 
+             {% block list_view_content%}
+             {% endblock %} 
+             {% if messages %} 
+             {% for message in messages %}
+
+            <div
+              aria-live="polite"
+              aria-atomic="true"
+              style="min-height: 200px"
+            >
+              <div
+                class="toast hide"
+                data-autohide="false"
+                style="
+                  position: fixed;
+                  bottom: 0;
+                  right: 0;
+                  z-index: 9999;
+                  float: right;
+                "
+                data-delay="10000"
+              >
+                <div class="toast-header">
+                  <strong class="mr-auto">Model Builder</strong>
+                  <button
+                    type="button"
+                    onclick="hideToast()"
+                    class="ml-2 mb-1 close"
+                    data-dismiss="toast"
+                    aria-label="Close"
+                  >
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="toast-body">{{ message }}</div>
+              </div>
+            </div>
+            {% endfor %} {% endif %}
+<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+  <div class="toast-header">
+    <img src" class="rounded mr-2" alt="no image">
+    <strong class="mr-auto">Bootstrap</strong>
+    <small class="text-muted">2 seconds ago</small>
+    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="toast-body">
+    Heads up, toasts will stack automatically
+  </div>
+</div>
+            <!-- [ Main Content ] end -->
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- [ Main Content ] end -->
-         
+  </div>
+</div>
+<!-- [ Main Content ] end -->
 
 {% endblock content %}
 

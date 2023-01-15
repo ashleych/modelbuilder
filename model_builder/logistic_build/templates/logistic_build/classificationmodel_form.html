@@ -47,13 +47,15 @@ window.addEventListener('load', function() {
 // train data dict is sent by django into the context varaible in the templates
     train_data_initial =$('#id_traindata').val(); //if value is prepopulated, usually would happen in the case previus exp is chosen, else will be blank
     feature_cols_drop_down =$('#id_feature_cols').val(); //if value is prepopulated, usually would happen in the case previus exp is chosen, else will be blank
-    if(train_data_dict[train_data_initial]){
+//     if (feature_cols_drop_down.length == 0){
+//     if(train_data_dict[train_data_initial]){
         
-        if (Object.is(feature_cols_drop_down, undefined) || Object.is(feature_cols_drop_down, null)){
-        options_list= JSON.parse(train_data_dict[train_data_initial])
-        buildDropDowns(options_list);
-        }
-    }
+//         if (Object.is(feature_cols_drop_down, undefined) || Object.is(feature_cols_drop_down, null)){
+//         options_list= JSON.parse(train_data_dict[train_data_initial])
+//         buildDropDowns(options_list);
+//         }
+//     }
+// }
 
         
         $("#id_traindata").change(function() {

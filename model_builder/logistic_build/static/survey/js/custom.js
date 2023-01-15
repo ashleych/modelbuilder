@@ -5,3 +5,23 @@ $(document).ready(function () {
     dateInputFields.flatpickr();
   }
 });
+
+// document.addEventListener("DOMContentLoaded", function() {
+//   $('#companyUpdOK').toast();
+// });
+
+// document.addEventListener("DOMContentReady", function() {
+
+//   $("#mytoast").toast();
+//   $('.toast').toast('show');
+
+// });
+
+$(document).ready(function () {
+  $("body").on("click", ".close", function () {
+    // $(this).closest('.toast').toast('hide')
+    $(".toast").hide();
+  });
+});
+
+
