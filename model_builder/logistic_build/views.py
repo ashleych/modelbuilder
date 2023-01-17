@@ -483,7 +483,7 @@ class ClassificationmodelUpdateView(LoginRequiredMixin, SuccessMessageMixin, Upd
         for t in Traindata.objects.all().values():
             train_data_dict[t['file_id']] = t['column_names']
         context['train_data_dict'] = json.dumps(train_data_dict)
-        context['bread_crumb']=["Classification model", "Updation"]
+        context['bread_crumb'] = ["Classification model", "Updation"]
 
         return context
 

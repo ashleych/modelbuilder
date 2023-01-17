@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title></title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="" />
+  </head>
+  <body>
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      $(document).ready(function () {
+        //   $("#success-alert").hide();
+          // $("#success-alert").hide();
+          
+        //   $("#success-alert").fadeTo(2000, 500).slideUp(500, function() {
+            //       $("#success-alert").slideUp(500);
+            //     });
+            $("#myWish").click(function showAlert() {
+            $("#success-alert")
+            .fadeTo(2000, 500)
+            .slideUp(500, function () {
+                $("#success-alert").slideUp(500);
+            });
+        });
+        </script>
+        
+        <script>
+            $(document).ready(function () {
+            $("#success-alert").fadeIn(4000);
+            })
+        
+        
+        </script>
+
+    <div id="success-alert" style="display: none;">
+      <strong>Success! </strong> Product have added to your wishlist.
+    </div>
+  </body>
+</html>

@@ -8,11 +8,7 @@ Dashboard
 {% load logistic_build_tags %}
 {% block content %}
 
-<script>
-  function hideToast() {
-    $(".toast").hide();
-  }
-</script>
+
 <!-- [ Main Content ] start -->
 <div class="pcoded-main-container">
   <div class="pcoded-wrapper">
@@ -54,53 +50,14 @@ Dashboard
              {% if messages %} 
              {% for message in messages %}
 
-            <div
-              aria-live="polite"
-              aria-atomic="true"
-              style="min-height: 200px"
-            >
-              <div
-                class="toast hide"
-                data-autohide="false"
-                style="
-                  position: fixed;
-                  bottom: 0;
-                  right: 0;
-                  z-index: 9999;
-                  float: right;
-                "
-                data-delay="10000"
-              >
-                <div class="toast-header">
-                  <strong class="mr-auto">Model Builder</strong>
-                  <button
-                    type="button"
-                    onclick="hideToast()"
-                    class="ml-2 mb-1 close"
-                    data-dismiss="toast"
-                    aria-label="Close"
-                  >
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                <div class="toast-body">{{ message }}</div>
-              </div>
-            </div>
-            {% endfor %} {% endif %}
-<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-  <div class="toast-header">
-    <img src" class="rounded mr-2" alt="no image">
-    <strong class="mr-auto">Bootstrap</strong>
-    <small class="text-muted">2 seconds ago</small>
-    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-  <div class="toast-body">
-    Heads up, toasts will stack automatically
-  </div>
-</div>
+          <div class="alert alert-success" style=" display: none; margin: 0px auto; padding-left: 65px; position: fixed; z-index: 1031; bottom: 20px; right: 20px; "id="success-alert">
+          <button type="button" class="close" data-dismiss="alert"></button>
+          <strong>Success! </strong> {{ message }}
+        </div>
+            {% endfor %} 
+            {% endif %}
             <!-- [ Main Content ] end -->
+
           </div>
         </div>
       </div>
